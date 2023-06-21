@@ -11,6 +11,8 @@
       align the position of the line to device pixel metrics - or find something else ...
 
     - QskCheckBox::Error is not properly supported
+
+    - QskComboBox::Pressed state is missing
  */
 
 #include "QskFluent2Skin.h"
@@ -109,9 +111,13 @@ namespace
 
       private:
         void setupBox();
+
         void setupCheckBox();
         void setupCheckBoxColors( QskAspect::Section );
+
         void setupComboBox();
+        void setupComboBoxColors( QskAspect::Section );
+
         void setupDialogButtonBox();
         void setupFocusIndicator();
         void setupInputPanel();
@@ -343,9 +349,9 @@ void Editor::setupCheckBoxColors( QskAspect::Section section )
              */
             for ( const auto state3 : { A::NoState, Q::Error } )
             {
-                const auto box = Q::Box | states | state3;
-                const auto text = Q::Text | states | state3;
-                const auto indicator = Q::Indicator | states | state3;
+                const auto box = Q::Box | section | states | state3;
+                const auto text = Q::Text | section | states | state3;
+                const auto indicator = Q::Indicator | section | states | state3;
 
 #if 1
                 if ( state3 == Q::Error && !( states & Q::Disabled ) )
@@ -379,60 +385,106 @@ void Editor::setupCheckBoxColors( QskAspect::Section section )
 void Editor::setupComboBox()
 {
     using Q = QskComboBox;
-
-    const auto& pal = theme.palette;
+    using A = QskAspect;
 
     setStrutSize( Q::Panel, { -1, 32 } );
     setBoxBorderMetrics( Q::Panel, 1 );
     setBoxShape( Q::Panel, 3 );
     setPadding( Q::Panel, { 11, 0, 11, 0 } );
 
-    setGradient( Q::Panel, pal.fillColor.control.defaultColor );
-    setBoxBorderGradient( Q::Panel,
-        pal.elevation.control.border, pal.fillColor.control.defaultColor );
-
     setStrutSize( Q::Icon, 12, 12 );
     setPadding( Q::Icon, { 0, 0, 8, 0 } );
-    setGraphicRole( Q::Icon, QskFluent2Skin::GraphicRoleFillColorTextPrimary );
 
     setAlignment( Q::Text, Qt::AlignLeft | Qt::AlignVCenter );
     setFontRole( Q::Text, QskFluent2Skin::Body );
-    setColor( Q::Text, pal.fillColor.text.primary );
 
     setStrutSize( Q::StatusIndicator, 12, 12 );
     setSymbol( Q::StatusIndicator, symbol( "spin-box-arrow-down" ) );
     setSymbol( Q::StatusIndicator | Q::PopupOpen, symbol( "spin-box-arrow-up" ) );
 
-    setGraphicRole( Q::StatusIndicator, QskFluent2Skin::GraphicRoleFillColorTextSecondary );
-
-    // Hovered:
-
-    setGradient( Q::Panel | Q::Hovered, pal.fillColor.control.secondary );
-    setBoxBorderGradient( Q::Panel | Q::Hovered,
-        pal.elevation.textControl.border, pal.fillColor.control.secondary );
-
-
-    // Focused (Pressed doesn't exist yet):
-
+    // Using Focused (Pressed doesn't exist yet):
     setBoxBorderMetrics( Q::Panel | Q::Focused, { 1, 1, 1, 2 } );
 
-    setGradient( Q::Panel | Q::Focused, pal.fillColor.control.inputActive );
+    // colors
 
-    auto gradient = pal.elevation.textControl.border;
-    gradient.at( 1 ) = pal.fillColor.accent.defaultColor;
+    const auto baseBody = sectionColor( A::Body );
+    setupComboBoxColors( A::Body );
 
-    setBoxBorderGradient( Q::Panel | Q::Focused, gradient, pal.fillColor.control.inputActive );
+    for ( int i = A::Body + 1; i <= A::Floating; i++ )
+    {
+        const auto section = static_cast< A::Section >( i );
 
-    // Disabled:
+        const auto baseColor = sectionColor( section );
+        if ( baseColor != baseBody )
+            setupComboBoxColors( section );
+    }
+}
 
-    setGradient( Q::Panel | Q::Disabled, pal.fillColor.control.disabled );
-    setBoxBorderColors( Q::Panel | Q::Disabled, pal.strokeColor.control.defaultColor );
+void Editor::setupComboBoxColors( QskAspect::Section section )
+{
+    using Q = QskComboBox;
+    using W = QskFluent2Skin;
 
-    setColor( Q::Text | Q::Disabled, pal.fillColor.text.disabled );
-    setGraphicRole( Q::Icon | Q::Disabled, QskFluent2Skin::GraphicRoleFillColorTextDisabled );
+    const auto baseColor = sectionColor( section );
+    const auto& pal = theme.palette;
 
-    setGraphicRole( Q::StatusIndicator | Q::Disabled,
-        QskFluent2Skin::GraphicRoleFillColorTextDisabled );
+    for ( const auto state : { QskAspect::NoState, Q::Hovered, Q::Focused, Q::Disabled } )
+    {
+        QRgb panelColor, borderColor1, borderColor2, textColor;
+
+        if ( state == QskAspect::NoState )
+        {
+            panelColor = pal.fillColor.control.defaultColor;
+            borderColor1 = pal.elevation.control.border[0];
+            borderColor2 = pal.elevation.control.border[1];
+            textColor = pal.fillColor.text.primary;
+
+        }
+        else if ( state == Q::Hovered )
+        {
+            panelColor = pal.fillColor.control.secondary;
+            borderColor1 = pal.elevation.textControl.border[0];
+            borderColor2 = pal.elevation.textControl.border[1];
+            textColor = pal.fillColor.text.primary;
+        }
+        else if ( state == Q::Focused )
+        {
+
+            panelColor = pal.fillColor.control.inputActive;
+            borderColor1 = pal.elevation.textControl.border[0];
+            borderColor2 = pal.fillColor.accent.defaultColor;
+            textColor = pal.fillColor.text.primary;
+        }
+        else if ( state == Q::Disabled )
+        {
+            panelColor = pal.fillColor.control.disabled;
+            borderColor2 = borderColor1 = pal.strokeColor.control.defaultColor;
+            textColor = pal.fillColor.text.disabled;
+        }
+
+        const auto panel = Q::Panel | section | state;
+        const auto text = Q::Text | section | state;
+        const auto icon = Q::Icon | section | state;
+        const auto indicator = Q::StatusIndicator | section | state;
+
+        panelColor = rgbSolid2( panelColor, baseColor );
+
+        setGradient( panel, panelColor );
+        setBoxBorderGradient( panel, borderColor1, borderColor2, panelColor );
+
+        setColor( text, textColor );
+
+        if ( state == Q::Disabled )
+        {
+            setGraphicRole( icon, W::GraphicRoleFillColorTextDisabled );
+            setGraphicRole( indicator, W::GraphicRoleFillColorTextDisabled );
+        }
+        else
+        {
+            setGraphicRole( icon, W::GraphicRoleFillColorTextPrimary );
+            setGraphicRole( indicator, W::GraphicRoleFillColorTextSecondary );
+        }
+    }
 }
 
 void Editor::setupDialogButtonBox()

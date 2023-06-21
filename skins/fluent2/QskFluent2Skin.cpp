@@ -1008,6 +1008,25 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
         palette.fillColor.accent.disabled = rgbGray( 0, 0.2169 );
         palette.fillColor.accent.selectedTextBackground = accentColors[ AccentBase ];
 
+#if 0
+        // system colors
+
+        critical = 0xffc42b1c;
+        success = 0xff0f7b0f;
+        attention = 0xff005fb7;
+        caution = 0xff9d5d00;
+        attentionBackground = rgbGray( 246, 0.50 );
+        successBackground = 0xffdff6dd;
+        cautionBackground = 0xfffff4ce;
+        criticalBackground = 0xfffde7e9;
+        neutral = rgbGray( 0, 0.4458 );
+        neutralBackground = rgbGray( 0, 0.0241 );
+
+        solidNeutral = rgbGray( 138 );
+        solidAttentionBackground = rgbGray( 247 );
+        solidNeutralBackground = rgbGray( 243 );
+#endif
+
         // Elevation:
 
         palette.elevation.control.border = { rgbGray( 0, 0.0578 ), rgbGray( 0, 0.1622 ) };
@@ -1109,6 +1128,24 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
         palette.fillColor.accent.tertiary = QskRgb::toTransparentF( accentColors[ AccentLight2 ], 0.80 );
         palette.fillColor.accent.disabled = rgbGray( 255, 0.1581 );
         palette.fillColor.accent.selectedTextBackground = accentColors[ AccentBase ];
+
+#if 0
+        // system colors
+
+        critical = 0xffff99a4;
+        success = 0xff6ccb5f;
+        attention = 0xff60cdff;
+        caution = 0xfffce100;
+        attentionBackground = rgbGray( 255, 0.0326 );
+        successBackground = 0xff393d1b;
+        cautionBackground = 0xff433519;
+        criticalBackground = 0xff442726;
+        neutral = rgbGray( 255, 0.5442 );
+        neutralBackground = rgbGray( 255, 0.0326 );
+        solidNeutral = rgbGray( 157 );
+        solidAttentionBackground = rgbGray( 46 );
+        solidNeutralBackground = rgbGray( 46 );
+#endif
 
         // Elevation:
 

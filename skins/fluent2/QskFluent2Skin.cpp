@@ -126,11 +126,16 @@ namespace
         void setupPageIndicator();
         void setupPopup();
         void setupProgressBar();
+
         void setupPushButton();
         void setupPushButtonColors( QskAspect::Section );
+
         void setupRadioBox();
         void setupScrollView();
+
         void setupSegmentedBar();
+        void setupSegmentedBarColors( QskAspect::Section );
+
         void setupSeparator();
         void setupSlider();
         void setupSpinBox();
@@ -801,57 +806,114 @@ void Editor::setupSegmentedBar()
 {
     using Q = QskSegmentedBar;
     using A = QskAspect;
-    const auto& pal = theme.palette;
 
     const QSizeF segmentStrutSize( 120, 32 );
 
     setBoxBorderMetrics( Q::Panel, 1 );
-
-    setBoxBorderGradient( Q::Panel, pal.elevation.control.border,
-        pal.fillColor.control.defaultColor );
-
-    setGradient( Q::Panel, pal.fillColor.control.defaultColor );
+    setBoxBorderMetrics( Q::Panel | Q::Selected | Q::Disabled, 0 );
     setSpacing( Q::Panel, 8 );
 
     setStrutSize( Q::Icon, { 12, 12 } );
-    setGraphicRole( Q::Icon, QskFluent2Skin::GraphicRoleFillColorTextPrimary );
 
     setFontRole( Q::Text, QskFluent2Skin::Body );
-    setColor( Q::Text, pal.fillColor.text.primary );
 
     setStrutSize( Q::Segment | A::Horizontal, segmentStrutSize );
     setStrutSize( Q::Segment | A::Vertical, segmentStrutSize.transposed() );
     setBoxShape( Q::Segment, 4 );
     setPadding( Q::Segment, { 8, 0, 8, 0 } );
 
-    // Hovered:
-    setGradient( Q::Segment | Q::Hovered, pal.fillColor.control.secondary );
+    const auto baseBody = sectionColor( QskAspect::Body );
+    setupSegmentedBarColors( QskAspect::Body );
 
-    setBoxBorderGradient( Q::Segment | Q::Hovered, pal.elevation.control.border,
-        pal.fillColor.control.secondary );
+    for ( int i = QskAspect::Body + 1; i <= QskAspect::Floating; i++ )
+    {
+        const auto section = static_cast< QskAspect::Section >( i );
 
-    // Selected:
-    setGradient( Q::Segment | Q::Selected, pal.fillColor.accent.defaultColor );
-    setGraphicRole( Q::Icon | Q::Selected,
-        QskFluent2Skin::GraphicRoleFillColorTextOnAccentPrimary );
-    setColor( Q::Text | Q::Selected, pal.fillColor.textOnAccent.primary );
+        const auto baseColor = sectionColor( section );
+        if ( baseColor != baseBody )
+            setupSegmentedBarColors( section );
+    }
+}
 
-    // Disabled:
-    const QRgb standardDisabledBorderColor =
-        rgbSolid( pal.strokeColor.control.defaultColor, pal.fillColor.control.disabled );
+void Editor::setupSegmentedBarColors( QskAspect::Section section )
+{
+    using Q = QskSegmentedBar;
+    using A = QskAspect;
+    using W = QskFluent2Skin;
 
-    setBoxBorderColors( Q::Segment | Q::Disabled, standardDisabledBorderColor );
+    const auto baseColor = sectionColor( section );
 
-    setGradient( Q::Segment | Q::Disabled, pal.fillColor.control.disabled );
-    setColor( Q::Text | Q::Disabled, pal.fillColor.text.disabled );
-    setGraphicRole( Q::Icon | Q::Disabled, QskFluent2Skin::GraphicRoleFillColorTextDisabled );
+    const auto& pal = theme.palette;
 
+    const auto panelColor = rgbSolid2( pal.fillColor.control.defaultColor, baseColor );
+    setGradient( Q::Panel, panelColor );
 
-    setGradient( Q::Segment | Q::Selected | Q::Disabled, pal.fillColor.accent.disabled );
-    setColor( Q::Text | Q::Selected | Q::Disabled, pal.fillColor.textOnAccent.disabled );
-    setGraphicRole( Q::Icon | Q::Selected | Q::Disabled,
-        QskFluent2Skin::GraphicRoleFillColorTextOnAccentDisabled );
-    setBoxBorderMetrics( Q::Panel | Q::Selected | Q::Disabled, 0 );
+    for ( const auto state1 : { A::NoState, Q::Hovered, Q::Disabled } )
+    {
+        for ( const auto state2 : { A::NoState, Q::Selected } )
+        {
+            const auto states = state1 | state2;
+
+            QRgb segmentColor, borderColor1, borderColor2, textColor;
+            int graphicRole;
+
+            if ( states == A::NoState )
+            {
+                segmentColor = pal.fillColor.control.defaultColor;
+                borderColor1 = pal.elevation.control.border[0];
+                borderColor2 = pal.elevation.control.border[1];
+                textColor = pal.fillColor.text.primary;
+
+                graphicRole = W::GraphicRoleFillColorTextPrimary;
+            }
+            else if ( states & Q::Hovered )
+            {
+                segmentColor = pal.fillColor.control.secondary;
+                borderColor1 = pal.elevation.control.border[0];
+                borderColor2 = pal.elevation.control.border[1];
+                textColor = pal.fillColor.text.primary;
+
+                graphicRole = W::GraphicRoleFillColorTextPrimary;
+            }
+            else if ( states == ( Q::Selected | Q::Disabled ) )
+            {
+                segmentColor = pal.fillColor.accent.disabled;
+                borderColor1 = borderColor2 = pal.strokeColor.control.defaultColor;
+                textColor = pal.fillColor.textOnAccent.disabled;
+
+                graphicRole = W::GraphicRoleFillColorTextOnAccentDisabled;
+            }
+            else if ( states & Q::Selected )
+            {
+                segmentColor = pal.fillColor.accent.defaultColor;
+                borderColor1 = pal.elevation.control.border[0];
+                borderColor2 = pal.elevation.control.border[1];
+                textColor = pal.fillColor.textOnAccent.primary;
+
+                graphicRole = W::GraphicRoleFillColorTextOnAccentPrimary;
+            }
+            else if ( states == Q::Disabled )
+            {
+                segmentColor = pal.fillColor.control.disabled;
+                borderColor1 = borderColor2 = pal.strokeColor.control.defaultColor;
+                textColor = pal.fillColor.text.disabled;
+                graphicRole = W::GraphicRoleFillColorTextDisabled;
+            }
+
+            const auto segment = Q::Segment | section | states;
+            const auto text = Q::Text | section | states;
+            const auto icon = Q::Icon | section | states;
+
+            segmentColor = rgbSolid2( segmentColor, baseColor );
+
+            setGradient( segment, segmentColor );
+            setBoxBorderGradient( segment, borderColor1, borderColor2, panelColor );
+
+            setColor( text, textColor );
+
+            setGraphicRole( icon, graphicRole );
+        }
+    }
 }
 
 void Editor::setupSeparator()

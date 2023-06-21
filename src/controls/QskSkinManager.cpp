@@ -83,7 +83,7 @@ namespace
                 const auto factoryData = pluginData.value( TokenData ).toObject();
 
                 m_factoryId = factoryData.value( TokenFactoryId ).toString().toLower();
-#if 1
+#if 0
                 if ( m_factoryId == "fluent2factory" )
                     return false; // we need to solve a couple of problems first
 #endif

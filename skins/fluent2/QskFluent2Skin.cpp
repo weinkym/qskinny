@@ -9,6 +9,8 @@
     - we have a lot of lines with 1 pixels. Unfortunately OpenGL does some sort
       of antialiasing, when a line is not a pixel position. So we need to
       align the position of the line to device pixel metrics - or find something else ...
+
+    - QskCheckBox::Error is not properly supported
  */
 
 #include "QskFluent2Skin.h"
@@ -108,6 +110,7 @@ namespace
       private:
         void setupBox();
         void setupCheckBox();
+        void setupCheckBoxColors( QskAspect::Section );
         void setupComboBox();
         void setupDialogButtonBox();
         void setupFocusIndicator();
@@ -118,7 +121,7 @@ namespace
         void setupPopup();
         void setupProgressBar();
         void setupPushButton();
-        void setupPushButton( QskAspect::Section );
+        void setupPushButtonColors( QskAspect::Section );
         void setupRadioBox();
         void setupScrollView();
         void setupSegmentedBar();
@@ -229,7 +232,7 @@ void Editor::setupBox()
     using Q = QskBox;
     using A = QskAspect;
 
-    setGradient( Q::Panel, A::Body );
+    setGradient( Q::Panel, sectionColor( A::Body ) );
     setGradient( Q::Panel | A::Header, sectionColor( A::Header ) );
     setGradient( Q::Panel | A::Footer, sectionColor( A::Footer ) );
 }
@@ -237,8 +240,7 @@ void Editor::setupBox()
 void Editor::setupCheckBox()
 {
     using Q = QskCheckBox;
-
-    const auto& pal = theme.palette;
+    using A = QskAspect;
 
     setStrutSize( Q::Panel, 126, 38 );
     setSpacing( Q::Panel, 8 );
@@ -248,40 +250,130 @@ void Editor::setupCheckBox()
     setBoxBorderMetrics( Q::Box, 1 );
     setPadding( Q::Box, 5 ); // "icon size"
 
-    setGradient( Q::Box, pal.fillColor.controlAlt.secondary );
-    setBoxBorderColors( Q::Box, pal.strokeColor.controlStrong.defaultColor );
+    setFontRole( Q::Text, QskFluent2Skin::Body );
 
-    setGradient( Q::Box | Q::Checked, pal.fillColor.accent.defaultColor );
-    setBoxBorderColors( Q::Box | Q::Checked, pal.fillColor.accent.defaultColor );
+    // colors
+
+    const auto baseBody = sectionColor( A::Body );
+    setupCheckBoxColors( A::Body );
+
+    for ( int i = A::Body + 1; i <= A::Floating; i++ )
+    {
+        const auto section = static_cast< A::Section >( i );
+
+        const auto baseColor = sectionColor( section );
+        if ( baseColor != baseBody )
+            setupCheckBoxColors( section );
+    }
+}
+
+void Editor::setupCheckBoxColors( QskAspect::Section section )
+{
+    using Q = QskCheckBox;
+    using A = QskAspect;
+
+    const auto& pal = theme.palette;
+    const auto baseColor = sectionColor( section );
 
     const auto checkMark = symbol( "checkmark" );
-    setSymbol( Q::Indicator | Q::Checked, checkMark,
-        { QskStateCombination::CombinationNoState, Q::Disabled } );
-    setGraphicRole( Q::Indicator, QskFluent2Skin::GraphicRoleFillColorTextOnAccentPrimary );
 
-    setFontRole( Q::Text, QskFluent2Skin::Body );
-    setColor( Q::Text, pal.fillColor.text.primary );
+    for ( const auto state1 : { A::NoState, Q::Hovered, Q::Pressed, Q::Disabled } )
+    {
+        QRgb fillColor, borderColor, textColor;
 
-    setGradient( Q::Box | Q::Hovered, pal.fillColor.controlAlt.tertiary );
-    setBoxBorderColors( Q::Box | Q::Hovered, pal.strokeColor.controlStrong.defaultColor );
-    setGradient( Q::Box | Q::Hovered | Q::Checked, pal.fillColor.accent.secondary );
-    setBoxBorderColors( Q::Box | Q::Hovered | Q::Checked, pal.fillColor.accent.secondary );
-    // indicator the same as in Rest state
+        for ( const auto state2 : { A::NoState, Q::Checked } )
+        {
+            const auto states = state1 | state2;
 
-    setGradient( Q::Box | Q::Pressed, pal.fillColor.controlAlt.quaternary );
-    setBoxBorderColors( Q::Box | Q::Pressed, pal.strokeColor.controlStrong.disabled );
-    setGradient( Q::Box | Q::Pressed | Q::Checked, pal.fillColor.accent.tertiary );
-    setBoxBorderColors( Q::Box | Q::Pressed | Q::Checked, pal.fillColor.accent.tertiary );
-    setGraphicRole( Q::Indicator | Q::Pressed | Q::Checked,
-        QskFluent2Skin::GraphicRoleFillColorTextOnAccentSecondary );
+            if ( states == A::NoState )
+            {
+                fillColor = pal.fillColor.controlAlt.secondary;
+                borderColor = pal.strokeColor.controlStrong.defaultColor;
+                textColor = pal.fillColor.text.primary;
+            }
+            else if ( states == Q::Hovered )
+            {
+                fillColor = pal.fillColor.controlAlt.tertiary;
+                borderColor = pal.strokeColor.controlStrong.defaultColor;
+                textColor = pal.fillColor.text.primary;
+            }
+            else if ( states == ( Q::Hovered | Q::Checked ) )
+            {
+                fillColor = pal.fillColor.accent.secondary;
+                borderColor = fillColor;
+                textColor = pal.fillColor.text.primary;
+            }
+            else if ( states == Q::Checked )
+            {
+                fillColor = pal.fillColor.accent.defaultColor;
+                borderColor = pal.fillColor.accent.defaultColor;
+                textColor = pal.fillColor.text.primary;
+            }
+            else if ( states == Q::Pressed )
+            {
+                fillColor = pal.fillColor.controlAlt.quaternary;
+                borderColor = pal.strokeColor.controlStrong.disabled;
+                textColor = pal.fillColor.text.primary;
+            }
+            else if ( states == ( Q::Pressed | Q::Checked ) )
+            {
+                fillColor = pal.fillColor.accent.tertiary;
+                borderColor = pal.fillColor.accent.tertiary;
+                textColor = pal.fillColor.text.primary;
 
-    setGradient( Q::Box | Q::Disabled, pal.fillColor.controlAlt.disabled );
-    setBoxBorderColors( Q::Box | Q::Disabled, pal.strokeColor.controlStrong.disabled );
-    setGradient( Q::Box | Q::Disabled | Q::Checked, pal.fillColor.accent.disabled );
-    setBoxBorderColors( Q::Box | Q::Disabled | Q::Checked, pal.fillColor.accent.disabled );
-    setGraphicRole( Q::Indicator | Q::Disabled | Q::Checked,
-        QskFluent2Skin::GraphicRoleFillColorTextOnAccentDisabled );
-    setColor( Q::Text | Q::Disabled, pal.fillColor.text.disabled );
+                setSymbol( Q::Indicator | states, checkMark );
+            }
+            else if ( states == Q::Disabled )
+            {
+                fillColor = pal.fillColor.controlAlt.disabled;
+                borderColor = pal.strokeColor.controlStrong.disabled;
+                textColor = pal.fillColor.text.disabled;
+            }
+            else if ( states == ( Q::Disabled | Q::Checked ) )
+            {
+                fillColor = pal.fillColor.accent.disabled;
+                borderColor = pal.fillColor.accent.disabled;
+                textColor = pal.fillColor.text.disabled;
+            }
+
+            /*
+                Support for QskCheckBox::Error is not properly defined.
+                Doing some basic definitions, so that we can at least
+                see the boxes with this state. TODO ...
+             */
+            for ( const auto state3 : { A::NoState, Q::Error } )
+            {
+                const auto box = Q::Box | states | state3;
+                const auto text = Q::Text | states | state3;
+                const auto indicator = Q::Indicator | states | state3;
+
+#if 1
+                if ( state3 == Q::Error && !( states & Q::Disabled ) )
+                {
+                    borderColor = QskRgb::IndianRed;
+                    if ( states & Q::Checked )
+                        fillColor = QskRgb::DarkRed;
+                }
+#endif
+                fillColor = rgbSolid2( fillColor, baseColor );
+                setGradient( box, fillColor );
+
+                borderColor = rgbSolid2( borderColor, fillColor );
+                setBoxBorderColors( box, borderColor );
+
+                setColor( text, textColor );
+
+                if ( states & Q::Checked )
+                {
+                    setGraphicRole( indicator, ( states & Q::Disabled )
+                        ? QskFluent2Skin::GraphicRoleFillColorTextOnAccentDisabled
+                        : QskFluent2Skin::GraphicRoleFillColorTextOnAccentPrimary );
+
+                    setSymbol( indicator, checkMark );
+                }
+            }
+        }
+    }
 }
 
 void Editor::setupComboBox()
@@ -436,24 +528,8 @@ void Editor::setupProgressBar()
 
 void Editor::setupPushButton()
 {
-    const auto baseBody = sectionColor( QskAspect::Body );
-    setupPushButton( QskAspect::Body );
-
-    for ( int i = QskAspect::Body + 1; i <= QskAspect::Floating; i++ )
-    {
-        const auto section = static_cast< QskAspect::Section >( i );
-
-        const auto baseColor = sectionColor( section );
-        if ( baseColor != baseBody )
-            setupPushButton( section );
-    }
-}
-
-void Editor::setupPushButton( QskAspect::Section section )
-{
     using Q = QskPushButton;
     using W = QskFluent2Skin;
-    const auto& pal = theme.palette;
 
     setStrutSize( Q::Panel, { 120, 32 } );
     setBoxShape( Q::Panel, 4 );
@@ -467,6 +543,25 @@ void Editor::setupPushButton( QskAspect::Section section )
 
     setFontRole( Q::Text, W::Body );
 
+    const auto baseBody = sectionColor( QskAspect::Body );
+    setupPushButtonColors( QskAspect::Body );
+
+    for ( int i = QskAspect::Body + 1; i <= QskAspect::Floating; i++ )
+    {
+        const auto section = static_cast< QskAspect::Section >( i );
+
+        const auto baseColor = sectionColor( section );
+        if ( baseColor != baseBody )
+            setupPushButtonColors( section );
+    }
+}
+
+void Editor::setupPushButtonColors( QskAspect::Section section )
+{
+    using Q = QskPushButton;
+    using W = QskFluent2Skin;
+
+    const auto& pal = theme.palette;
     const auto baseColor = sectionColor( section );
 
     for ( const auto variation : { QskAspect::NoVariation, W::Accent } )

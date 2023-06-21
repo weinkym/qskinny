@@ -4,6 +4,7 @@
  *****************************************************************************/
 
 #include "Page.h"
+#include <QskRgbValue.h>
 
 Page::Page( QQuickItem* parent )
     : Page( Qt::Vertical, parent )
@@ -16,4 +17,11 @@ Page::Page( Qt::Orientation orientation, QQuickItem* parent )
     setMargins( 20 );
     setPadding( 10 );
     setSpacing( 10 );
+
+    if ( !qgetenv( "QSK_PAGE_COLOR" ).isEmpty() )
+    {
+        setPanel( true );
+        setGradientHint( Panel, QskRgb::Coral );
+        //setGradientHint( Panel, Qt::black );
+    }
 }

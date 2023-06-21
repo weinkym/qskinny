@@ -244,7 +244,7 @@ class QSK_FLUENT2_EXPORT QskFluent2Skin : public QskSkin
 
   public:
     QskFluent2Skin( const QskFluent2Theme&, QObject* parent = nullptr );
-      ~QskFluent2Skin() override;
+    ~QskFluent2Skin() override;
 
     enum GraphicRole
     {

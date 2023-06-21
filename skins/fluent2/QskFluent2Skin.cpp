@@ -13,6 +13,8 @@
     - QskCheckBox::Error is not properly supported
 
     - QskComboBox::Pressed state is missing
+    - QskPageIndicator not supported yet
+    - using qskDpToPixels
  */
 
 #include "QskFluent2Skin.h"
@@ -558,6 +560,48 @@ void Editor::setupMenu()
 
 void Editor::setupPageIndicator()
 {
+    /*
+        This code has absolitely nothing to do with the Fluent2 specs.
+        It is simply a placeholder, so that we can see something until
+        the implementation has been done
+     */
+    using Q = QskPageIndicator;
+    using A = QskAspect;
+
+    setSpacing( Q::Panel, 3 );
+    setPadding( Q::Panel, 4 );
+    setBoxShape( Q::Panel, 6, Qt::AbsoluteSize );
+
+    setStrutSize( Q::Bullet, 8, 8 );
+
+    // circles, without border
+    setBoxShape( Q::Bullet, 100, Qt::RelativeSize );
+    setBoxBorderMetrics( Q::Bullet, 0 );
+
+    setMargin( Q::Bullet, 1 );
+    setMargin( Q::Bullet | Q::Selected, 0 );
+
+    // colors
+
+    const auto baseBody = sectionColor( A::Body );
+    const auto& pal = theme.palette;
+
+    for ( int i = A::Body; i <= A::Floating; i++ )
+    {
+        const auto section = static_cast< A::Section >( i );
+
+        const auto baseColor = sectionColor( section );
+        if ( baseColor != baseBody || section == A::Body)
+        {
+            auto panelColor = pal.fillColor.control.secondary;
+            //panelColor = rgbSolid2( panelColor, baseColor );
+
+            setGradient( Q::Panel, panelColor );
+
+            setGradient( Q::Bullet, pal.fillColor.controlStrong.defaultColor );
+            setGradient( Q::Bullet | Q::Selected, pal.fillColor.accent.defaultColor );
+        }
+    }
 }
 
 void Editor::setupPopup()

@@ -13,7 +13,14 @@
     - QskCheckBox::Error is not properly supported
 
     - QskComboBox::Pressed state is missing
-    - QskPageIndicator not supported yet
+
+    - missing ( dummy implementation only ):
+
+        - QskPageIndicator
+        - QskInputPanel
+        - QskListView
+        - QskScrollView
+
     - using qskDpToPixels
  */
 
@@ -114,10 +121,10 @@ namespace
       private:
         void setupBox();
 
-        void setupCheckBox();
+        void setupCheckBoxMetrics();
         void setupCheckBoxColors( QskAspect::Section );
 
-        void setupComboBox();
+        void setupComboBoxMetrics();
         void setupComboBoxColors( QskAspect::Section );
 
         void setupDialogButtonBox();
@@ -129,13 +136,15 @@ namespace
         void setupPopup();
         void setupProgressBar();
 
-        void setupPushButton();
+        void setupPushButtonMetrics();
         void setupPushButtonColors( QskAspect::Section );
 
-        void setupRadioBox();
+        void setupRadioBoxMetrics();
+        void setupRadioBoxColors( QskAspect::Section );
+
         void setupScrollView();
 
-        void setupSegmentedBar();
+        void setupSegmentedBarMetrics();
         void setupSegmentedBarColors( QskAspect::Section );
 
         void setupSeparator();
@@ -212,32 +221,95 @@ namespace
 
 void Editor::setup()
 {
-    setupBox();
-    setupCheckBox();
-    setupComboBox();
-    setupDialogButtonBox();
-    setupFocusIndicator();
-    setupInputPanel();
-    setupListView();
-    setupMenu();
-    setupPageIndicator();
-    setupPopup();
-    setupProgressBar();
-    setupPushButton();
-    setupRadioBox();
-    setupScrollView();
-    setupSegmentedBar();
-    setupSeparator();
-    setupSlider();
-    setupSpinBox();
-    setupSubWindow();
-    setupSwitchButton();
-    setupTabButton();
-    setupTabBar();
-    setupTabView();
-    setupTextInput();
-    setupTextLabel();
-    setupVirtualKeyboard();
+    struct
+    {
+        void ( Editor::*setupMetrics)();
+        void ( Editor::*setupColors )( QskAspect::Section );
+    } table[] =
+    {
+        { &Editor::setupBox, nullptr },
+        { &Editor::setupDialogButtonBox, nullptr },
+        { &Editor::setupFocusIndicator, nullptr },
+        { &Editor::setupInputPanel, nullptr },
+        { &Editor::setupListView, nullptr },
+        { &Editor::setupMenu, nullptr },
+        { &Editor::setupPageIndicator, nullptr },
+        { &Editor::setupPopup, nullptr },
+        { &Editor::setupProgressBar, nullptr },
+        { &Editor::setupScrollView, nullptr },
+        { &Editor::setupSeparator, nullptr },
+        { &Editor::setupSlider, nullptr },
+        { &Editor::setupSpinBox, nullptr },
+        { &Editor::setupSubWindow, nullptr },
+        { &Editor::setupSwitchButton, nullptr },
+        { &Editor::setupTabButton, nullptr },
+        { &Editor::setupTabBar, nullptr },
+        { &Editor::setupTabView, nullptr },
+        { &Editor::setupTextInput, nullptr },
+        { &Editor::setupTextLabel, nullptr },
+        { &Editor::setupVirtualKeyboard, nullptr },
+
+        { &Editor::setupCheckBoxMetrics, &Editor::setupCheckBoxColors },
+        { &Editor::setupComboBoxMetrics, &Editor::setupComboBoxColors },
+        { &Editor::setupPushButtonMetrics, &Editor::setupPushButtonColors },
+        { &Editor::setupRadioBoxMetrics, &Editor::setupRadioBoxColors },
+        { &Editor::setupSegmentedBarMetrics, &Editor::setupSegmentedBarColors },
+    };
+
+    /*
+        The palette is made of a specific configurable colors and
+        predefined semitransparent shades of gray. Both need to
+        be resolved to opaque colors with the base colors of the sections. 
+
+        Resolving the colors can be done in 2 ways:
+
+            - render time
+
+              This actually means, that we do not create opaque colors and
+              create the scene graph nodes with semitransparent colors.
+
+            - definition time
+
+              We create opaque colors for the base colors of the sections
+              and set them as skin hints.
+
+        Resolving at render time sounds like the right solution as we
+        background colors set in application code will just work.
+
+        Unfortunately we have 2 different sets of grays for light/dark
+        base colors and when applications are setting a light color, where a
+        dark color ( or v.v ) is expected we might end up with unacceptable
+        results: ( white on light or black on dark ).
+
+        So there are pros and cons and we do not have a final opinion
+        about waht to do. For the moment we implement resolving at definition
+        time as an option to be able to play with both solutions.
+     */
+    const bool resolveTransparencies = true;
+
+    for ( const auto& entry : table )
+    {
+        (this->*entry.setupMetrics)();
+
+        if ( entry.setupColors )
+        {
+            (this->*entry.setupColors)( QskAspect::Body );
+
+            if ( resolveTransparencies )
+            {
+                const auto baseColor = sectionColor( QskAspect::Body );
+
+                for ( int i = QskAspect::Body + 1; i <= QskAspect::Floating; i++ )
+                {
+                    const auto section = static_cast< QskAspect::Section >( i );
+
+                    const auto baseSection = sectionColor( section );
+                    if ( baseSection != baseColor )
+                        (this->*entry.setupColors)( section );
+                }
+            }
+        }
+    }
 }
 
 void Editor::setupBox()
@@ -250,10 +322,9 @@ void Editor::setupBox()
     setGradient( Q::Panel | A::Footer, sectionColor( A::Footer ) );
 }
 
-void Editor::setupCheckBox()
+void Editor::setupCheckBoxMetrics()
 {
     using Q = QskCheckBox;
-    using A = QskAspect;
 
     setStrutSize( Q::Panel, 126, 38 );
     setSpacing( Q::Panel, 8 );
@@ -264,20 +335,6 @@ void Editor::setupCheckBox()
     setPadding( Q::Box, 5 ); // "icon size"
 
     setFontRole( Q::Text, QskFluent2Skin::Body );
-
-    // colors
-
-    const auto baseBody = sectionColor( A::Body );
-    setupCheckBoxColors( A::Body );
-
-    for ( int i = A::Body + 1; i <= A::Floating; i++ )
-    {
-        const auto section = static_cast< A::Section >( i );
-
-        const auto baseColor = sectionColor( section );
-        if ( baseColor != baseBody )
-            setupCheckBoxColors( section );
-    }
 }
 
 void Editor::setupCheckBoxColors( QskAspect::Section section )
@@ -389,10 +446,9 @@ void Editor::setupCheckBoxColors( QskAspect::Section section )
     }
 }
 
-void Editor::setupComboBox()
+void Editor::setupComboBoxMetrics()
 {
     using Q = QskComboBox;
-    using A = QskAspect;
 
     setStrutSize( Q::Panel, { -1, 32 } );
     setBoxBorderMetrics( Q::Panel, 1 );
@@ -411,20 +467,6 @@ void Editor::setupComboBox()
 
     // Using Focused (Pressed doesn't exist yet):
     setBoxBorderMetrics( Q::Panel | Q::Focused, { 1, 1, 1, 2 } );
-
-    // colors
-
-    const auto baseBody = sectionColor( A::Body );
-    setupComboBoxColors( A::Body );
-
-    for ( int i = A::Body + 1; i <= A::Floating; i++ )
-    {
-        const auto section = static_cast< A::Section >( i );
-
-        const auto baseColor = sectionColor( section );
-        if ( baseColor != baseBody )
-            setupComboBoxColors( section );
-    }
 }
 
 void Editor::setupComboBoxColors( QskAspect::Section section )
@@ -499,15 +541,19 @@ void Editor::setupDialogButtonBox()
     using Q = QskDialogButtonBox;
     const auto& pal = theme.palette;
 
-    setPadding( Q::Panel, 24 );
+    setPadding( Q::Panel, 20 );
     setGradient( Q::Panel, pal.background.solid.base );
-    setPadding(Q::Panel, 20 );
 }
 
 void Editor::setupFocusIndicator()
 {
     using Q = QskFocusIndicator;
     const auto& pal = theme.palette;
+
+    /*
+        When having sections with dark and others with light colors
+        we need a focus indicator that works on both. TODO ...
+     */
 
     setBoxBorderMetrics( Q::Panel, 2 );
     setPadding( Q::Panel, 3 );
@@ -594,7 +640,9 @@ void Editor::setupPageIndicator()
         if ( baseColor != baseBody || section == A::Body)
         {
             auto panelColor = pal.fillColor.control.secondary;
-            //panelColor = rgbSolid2( panelColor, baseColor );
+#if 0
+            panelColor = rgbSolid2( panelColor, baseColor );
+#endif
 
             setGradient( Q::Panel, panelColor );
 
@@ -627,7 +675,7 @@ void Editor::setupProgressBar()
     setGradient( Q::Bar, pal.fillColor.accent.defaultColor );
 }
 
-void Editor::setupPushButton()
+void Editor::setupPushButtonMetrics()
 {
     using Q = QskPushButton;
     using W = QskFluent2Skin;
@@ -643,18 +691,6 @@ void Editor::setupPushButton()
     setPadding( Q::Icon, { 0, 0, 8, 0 } );
 
     setFontRole( Q::Text, W::Body );
-
-    const auto baseBody = sectionColor( QskAspect::Body );
-    setupPushButtonColors( QskAspect::Body );
-
-    for ( int i = QskAspect::Body + 1; i <= QskAspect::Floating; i++ )
-    {
-        const auto section = static_cast< QskAspect::Section >( i );
-
-        const auto baseColor = sectionColor( section );
-        if ( baseColor != baseBody )
-            setupPushButtonColors( section );
-    }
 }
 
 void Editor::setupPushButtonColors( QskAspect::Section section )
@@ -756,97 +792,139 @@ void Editor::setupPushButtonColors( QskAspect::Section section )
     }
 }
 
-void Editor::setupRadioBox()
+void Editor::setupRadioBoxMetrics()
 {
     using Q = QskRadioBox;
-    const auto& pal = theme.palette;
 
     setSpacing( Q::Button, 8 );
     setStrutSize( Q::Button, { 115, 38 } );
 
-    setStrutSize( Q::CheckIndicatorPanel, { 20, 20 } );
+    /*
+        We do not have an indicator - states are indicated by the panel border
+
+        However the colors of the inner side of the border are not solid for
+        the selected states and we use a dummy indicator to get this done.
+
+        How to solve this in a better way, TODO ... 
+     */
+
+    setBoxShape( Q::CheckIndicator, 100, Qt::RelativeSize );
+    setBoxBorderMetrics( Q::CheckIndicator, 0 );
+    setBoxBorderMetrics( Q::CheckIndicator | Q::Selected, 1 );
+    setBoxBorderMetrics( Q::CheckIndicator | Q::Pressed | Q::Selected, 1 );
+
     setBoxShape( Q::CheckIndicatorPanel, 100, Qt::RelativeSize );
+    setStrutSize( Q::CheckIndicatorPanel, { 20, 20 } );
+
     setBoxBorderMetrics( Q::CheckIndicatorPanel, 1 );
-    setFontRole( Q::Text, QskFluent2Skin::Body );
-    setColor( Q::Text, pal.fillColor.text.primary );
 
-    // Rest
-
-    setGradient( Q::CheckIndicatorPanel, pal.fillColor.controlAlt.secondary );
-    setBoxBorderColors( Q::CheckIndicatorPanel, pal.strokeColor.controlStrong.defaultColor );
-
-    setGradient( Q::CheckIndicatorPanel | Q::Selected, pal.fillColor.accent.defaultColor );
     setBoxBorderMetrics( Q::CheckIndicatorPanel | Q::Selected, 0 );
-
     setPadding( Q::CheckIndicatorPanel | Q::Selected, { 5, 5 } ); // indicator "strut size"
 
-    setBoxShape( Q::CheckIndicator | Q::Selected, 100, Qt::RelativeSize );
-    setBoxBorderMetrics( Q::CheckIndicator | Q::Selected, 1 );
-    setGradient( Q::CheckIndicator | Q::Selected, pal.fillColor.textOnAccent.primary );
-
-    setBoxBorderGradient( Q::CheckIndicator | Q::Selected,
-        pal.elevation.circle.border, pal.fillColor.accent.defaultColor );
-
-
-    // Hover
-
-    setGradient( Q::CheckIndicatorPanel | Q::Hovered, pal.fillColor.controlAlt.tertiary );
-
-    setGradient( Q::CheckIndicatorPanel | Q::Hovered | Q::Selected,
-        pal.fillColor.accent.secondary );
     setPadding( Q::CheckIndicatorPanel | Q::Hovered | Q::Selected, { 4, 4 } ); // indicator "strut size"
-
-    setBoxBorderGradient( Q::CheckIndicator | Q::Hovered,
-        pal.elevation.circle.border, pal.fillColor.accent.secondary );
-
-    // Pressed
-
-    setGradient( Q::CheckIndicatorPanel | Q::Pressed, pal.fillColor.controlAlt.quaternary );
-    setBoxBorderColors( Q::CheckIndicatorPanel | Q::Pressed,
-        pal.strokeColor.controlStrong.disabled );
-
     setPadding( Q::CheckIndicatorPanel | Q::Pressed, { 7, 7 } ); // indicator "strut size"
 
-    setBoxShape( Q::CheckIndicator | Q::Pressed, 100, Qt::RelativeSize );
-    setBoxBorderMetrics( Q::CheckIndicator | Q::Pressed, 0 );
-    setGradient( Q::CheckIndicator | Q::Pressed, pal.fillColor.textOnAccent.primary );
-
-    setGradient( Q::CheckIndicatorPanel | Q::Pressed | Q::Selected,
-        pal.fillColor.accent.tertiary );
-
     setBoxBorderMetrics( Q::CheckIndicatorPanel | Q::Pressed | Q::Selected, 0 );
-
     setPadding( Q::CheckIndicatorPanel | Q::Pressed | Q::Selected, { 6, 6 } ); // indicator "strut size"
-    setBoxBorderMetrics( Q::CheckIndicator | Q::Pressed, 1 );
 
-    setBoxBorderGradient( Q::CheckIndicator | Q::Pressed | Q::Selected,
-        pal.elevation.circle.border, pal.fillColor.accent.tertiary );
-
-    // Disabled
-
-    setGradient( Q::CheckIndicatorPanel | Q::Disabled, pal.fillColor.controlAlt.disabled );
-    setBoxBorderColors( Q::CheckIndicatorPanel | Q::Disabled,
-        pal.strokeColor.controlStrong.disabled );
-
-    setGradient( Q::CheckIndicatorPanel | Q::Disabled | Q::Selected,
-        pal.fillColor.accent.disabled );
     setBoxBorderMetrics( Q::CheckIndicatorPanel | Q::Disabled | Q::Selected, 0 );
-
     setPadding( Q::CheckIndicatorPanel | Q::Disabled | Q::Selected, { 6, 6 } ); // indicator "strut size"
 
-    setBoxBorderMetrics( Q::CheckIndicator | Q::Disabled | Q::Selected, 0 );
-    setGradient( Q::CheckIndicator | Q::Disabled | Q::Selected,
-        pal.fillColor.textOnAccent.primary );
-    setBoxShape( Q::CheckIndicator | Q::Disabled | Q::Selected, 100, Qt::RelativeSize );
+    setFontRole( Q::Text, QskFluent2Skin::Body );
+}
 
-    setColor( Q::Text | Q::Disabled, pal.fillColor.text.disabled );
+void Editor::setupRadioBoxColors( QskAspect::Section section )
+{
+    using Q = QskRadioBox;
+    using A = QskAspect;
+
+    const auto& pal = theme.palette;
+
+    const auto baseColor = sectionColor( section );
+
+    for ( const auto state1 : { A::NoState, Q::Hovered, Q::Pressed, Q::Disabled } )
+    {
+        for ( const auto state2 : { A::NoState, Q::Selected } )
+        {
+            const auto states = state1 | state2;
+
+            auto indicatorColor = pal.fillColor.textOnAccent.primary;
+            if ( !( states & Q::Selected ) )
+                indicatorColor = QskRgb::toTransparent( indicatorColor, 0 );
+
+            auto textColor = pal.fillColor.text.primary;
+            if ( states & Q::Disabled )
+                textColor = pal.fillColor.text.disabled;
+
+            QRgb panelBorderColor; 
+            if ( states & ( Q::Disabled | Q::Pressed ) )
+                panelBorderColor = pal.strokeColor.controlStrong.disabled;
+            else
+                panelBorderColor = pal.strokeColor.controlStrong.defaultColor;
+
+            auto panelColor = pal.fillColor.accent.defaultColor;
+
+            if ( states == A::NoState )
+            {
+                panelColor = pal.fillColor.controlAlt.secondary;
+            }
+            else if ( states == Q::Selected )
+            {
+            }
+            else if ( states == Q::Hovered )
+            {
+                panelColor = pal.fillColor.controlAlt.tertiary;
+            }
+            else if ( states == ( Q::Hovered | Q::Selected ) )
+            {
+                panelColor = pal.fillColor.accent.secondary;
+            }
+            else if ( states == Q::Pressed )
+            {
+                panelColor = pal.fillColor.controlAlt.quaternary;
+            }
+            else if ( states == ( Q::Pressed | Q::Selected ) )
+            {
+                panelColor = pal.fillColor.accent.tertiary;
+            }
+            else if ( states == Q::Disabled )
+            {
+                panelColor = pal.fillColor.controlAlt.disabled;
+            }
+            else if ( states == ( Q::Disabled | Q::Selected ) )
+            {
+                panelColor = pal.fillColor.accent.disabled;
+            }
+
+            const auto panel = Q::CheckIndicatorPanel | section | states;
+            const auto indicator = Q::CheckIndicator | section | states;
+            const auto text = Q::Text | section | states;
+
+
+#if 0
+            // we have different colors when making colors solid early. TODO ...
+            panelColor = rgbSolid2( panelColor, baseColor );
+            indicatorColor = rgbSolid2( indicatorColor, baseColor );
+#else
+            Q_UNUSED( baseColor );
+#endif
+            setBoxBorderGradient( indicator, pal.elevation.circle.border, panelColor );
+
+            setGradient( panel, panelColor );
+            setBoxBorderColors( panel, panelBorderColor );
+
+            setGradient( indicator, indicatorColor );
+
+            setColor( text, textColor );
+        }
+    }
 }
 
 void Editor::setupScrollView()
 {
 }
 
-void Editor::setupSegmentedBar()
+void Editor::setupSegmentedBarMetrics()
 {
     using Q = QskSegmentedBar;
     using A = QskAspect;
@@ -865,18 +943,6 @@ void Editor::setupSegmentedBar()
     setStrutSize( Q::Segment | A::Vertical, segmentStrutSize.transposed() );
     setBoxShape( Q::Segment, 4 );
     setPadding( Q::Segment, { 8, 0, 8, 0 } );
-
-    const auto baseBody = sectionColor( QskAspect::Body );
-    setupSegmentedBarColors( QskAspect::Body );
-
-    for ( int i = QskAspect::Body + 1; i <= QskAspect::Floating; i++ )
-    {
-        const auto section = static_cast< QskAspect::Section >( i );
-
-        const auto baseColor = sectionColor( section );
-        if ( baseColor != baseBody )
-            setupSegmentedBarColors( section );
-    }
 }
 
 void Editor::setupSegmentedBarColors( QskAspect::Section section )

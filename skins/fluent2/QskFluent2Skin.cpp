@@ -24,6 +24,35 @@
     - using qskDpToPixels
  */
 
+/*
+    The palette is made of a specific configurable colors and
+    predefined semitransparent shades of gray. Both need to
+    be resolved to opaque colors with the base colors of the sections. 
+
+    Resolving the colors can be done in 2 ways:
+
+        - render time
+
+          This actually means, that we do not create opaque colors and
+          create the scene graph nodes with semitransparent colors.
+
+        - definition time
+
+          We create opaque colors for the base colors of the sections
+          and set them as skin hints.
+
+    Resolving at render time sounds like the right solution as we
+    background colors set in application code will just work.
+
+    Unfortunately we have 2 different sets of grays for light/dark
+    base colors and when applications are setting a light color, where a
+    dark color ( or v.v ) is expected we might end up with unacceptable
+    results: ( white on light or black on dark ).
+
+    So there are pros and cons and we do not have a final opinion
+    about waht to do. For the moment we implement resolving at definition
+    time as an option to be able to play with both solutions.
+ */
 #include "QskFluent2Skin.h"
 #include "QskFluent2Theme.h"
 
@@ -78,6 +107,20 @@
 
 namespace
 {
+    inline QFont createFont( const QString& name, qreal lineHeight,
+        qreal size, qreal tracking, QFont::Weight weight )
+    {
+        QFont font( name, qRound( size ) );
+        font.setPixelSize( qRound( lineHeight ) );
+
+        if( !qskFuzzyCompare( tracking, 0.0 ) )
+            font.setLetterSpacing( QFont::AbsoluteSpacing, tracking );
+
+        font.setWeight( weight );
+
+        return font;
+    }
+
     inline constexpr QRgb rgbGray( int value, qreal opacity = 1.0 )
     {
         return qRgba( value, value, value, qRound( opacity * 255 ) );
@@ -101,9 +144,10 @@ namespace
             dummy method, so that we can compare the results with
             or without resolving the foreground alpha value
          */
-#if 1
+#if 0
         return rgbSolid( foreground, background );
 #else
+        Q_UNUSED( background );
         return foreground;
 #endif
     }
@@ -111,58 +155,90 @@ namespace
     class Editor : private QskSkinHintTableEditor
     {
       public:
-        Editor( QskSkinHintTable* table, const QskFluent2Theme& theme )
+        Editor( QskSkinHintTable* table )
             : QskSkinHintTableEditor( table )
-            , theme( theme )
         {
         }
 
-        void setup();
+        void setupMetrics();
+        void setupColors( QskAspect::Section, const QskFluent2Theme& );
 
       private:
-        void setupBox();
+        void setupFocusIndicator( const QskFluent2Theme& );
+        void setupInputPanel( const QskFluent2Theme& );
+        void setupPopup( const QskFluent2Theme& );
+        void setupSubWindow( const QskFluent2Theme& );
+
+        void setupBoxMetrics();
+        void setupBoxColors( QskAspect::Section, const QskFluent2Theme& );
 
         void setupCheckBoxMetrics();
-        void setupCheckBoxColors( QskAspect::Section );
+        void setupCheckBoxColors( QskAspect::Section, const QskFluent2Theme& );
 
         void setupComboBoxMetrics();
-        void setupComboBoxColors( QskAspect::Section );
+        void setupComboBoxColors( QskAspect::Section, const QskFluent2Theme& );
 
-        void setupDialogButtonBox();
-        void setupFocusIndicator();
-        void setupInputPanel();
-        void setupListView();
-        void setupMenu();
-        void setupPageIndicator();
-        void setupPopup();
-        void setupProgressBar();
+        void setupDialogButtonBoxMetrics();
+        void setupDialogButtonBoxColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupListViewMetrics();
+        void setupListViewColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupMenuMetrics();
+        void setupMenuColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupPageIndicatorMetrics();
+        void setupPageIndicatorColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupProgressBarMetrics();
+        void setupProgressBarColors( QskAspect::Section, const QskFluent2Theme& );
 
         void setupPushButtonMetrics();
-        void setupPushButtonColors( QskAspect::Section );
+        void setupPushButtonColors( QskAspect::Section, const QskFluent2Theme& );
 
         void setupRadioBoxMetrics();
-        void setupRadioBoxColors( QskAspect::Section );
+        void setupRadioBoxColors( QskAspect::Section, const QskFluent2Theme& );
 
-        void setupScrollView();
+        void setupScrollViewMetrics();
+        void setupScrollViewColors( QskAspect::Section, const QskFluent2Theme& );
 
         void setupSegmentedBarMetrics();
-        void setupSegmentedBarColors( QskAspect::Section );
+        void setupSegmentedBarColors( QskAspect::Section, const QskFluent2Theme& );
 
-        void setupSeparator();
-        void setupSlider();
-        void setupSpinBox();
-        void setupSubWindow();
-        void setupSwitchButton();
-        void setupTabButton();
-        void setupTabBar();
-        void setupTabView();
-        void setupTextInput();
-        void setupTextLabel();
-        void setupVirtualKeyboard();
+        void setupSeparatorMetrics();
+        void setupSeparatorColors( QskAspect::Section, const QskFluent2Theme& );
 
+        void setupSliderMetrics();
+        void setupSliderColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupSpinBoxMetrics();
+        void setupSpinBoxColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupSwitchButtonMetrics();
+        void setupSwitchButtonColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupTabButtonMetrics();
+        void setupTabButtonColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupTabBarMetrics();
+        void setupTabBarColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupTabViewMetrics();
+        void setupTabViewColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupTextInputMetrics();
+        void setupTextInputColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupTextLabelMetrics();
+        void setupTextLabelColors( QskAspect::Section, const QskFluent2Theme& );
+
+        void setupVirtualKeyboardMetrics();
+        void setupVirtualKeyboardColors( QskAspect::Section, const QskFluent2Theme& );
+
+#if 0
         inline QRgb sectionColor( QskAspect::Section section )
         {
-            const auto& colors = theme.palette.background.solid;
+            const auto& colors = m_theme.palette.background.solid;
 
             switch( section )
             {
@@ -178,6 +254,7 @@ namespace
                     return colors.base;
             }
         }
+#endif
 
         inline QskGraphic symbol( const char* name ) const
         {
@@ -201,126 +278,81 @@ namespace
         {
             setBoxBorderGradient( aspect, gradient[ 0 ], gradient[ 1 ], baseColor );
         }
-
-        const QskFluent2Theme& theme;
     };
 
-    QFont createFont( const QString& name, qreal lineHeight,
-        qreal size, qreal tracking, QFont::Weight weight )
-    {
-        QFont font( name, qRound( size ) );
-        font.setPixelSize( qRound( lineHeight ) );
-
-        if( !qskFuzzyCompare( tracking, 0.0 ) )
-            font.setLetterSpacing( QFont::AbsoluteSpacing, tracking );
-
-        font.setWeight( weight );
-
-        return font;
-    }
 }
 
-void Editor::setup()
+void Editor::setupMetrics()
 {
-    struct
-    {
-        void ( Editor::*setupMetrics)();
-        void ( Editor::*setupColors )( QskAspect::Section );
-    } table[] =
-    {
-        { &Editor::setupBox, nullptr },
-        { &Editor::setupDialogButtonBox, nullptr },
-        { &Editor::setupFocusIndicator, nullptr },
-        { &Editor::setupInputPanel, nullptr },
-        { &Editor::setupListView, nullptr },
-        { &Editor::setupMenu, nullptr },
-        { &Editor::setupPageIndicator, nullptr },
-        { &Editor::setupPopup, nullptr },
-        { &Editor::setupProgressBar, nullptr },
-        { &Editor::setupScrollView, nullptr },
-        { &Editor::setupSeparator, nullptr },
-        { &Editor::setupSlider, nullptr },
-        { &Editor::setupSpinBox, nullptr },
-        { &Editor::setupSubWindow, nullptr },
-        { &Editor::setupSwitchButton, nullptr },
-        { &Editor::setupTabButton, nullptr },
-        { &Editor::setupTabBar, nullptr },
-        { &Editor::setupTabView, nullptr },
-        { &Editor::setupTextInput, nullptr },
-        { &Editor::setupTextLabel, nullptr },
-        { &Editor::setupVirtualKeyboard, nullptr },
-
-        { &Editor::setupCheckBoxMetrics, &Editor::setupCheckBoxColors },
-        { &Editor::setupComboBoxMetrics, &Editor::setupComboBoxColors },
-        { &Editor::setupPushButtonMetrics, &Editor::setupPushButtonColors },
-        { &Editor::setupRadioBoxMetrics, &Editor::setupRadioBoxColors },
-        { &Editor::setupSegmentedBarMetrics, &Editor::setupSegmentedBarColors },
-    };
-
-    /*
-        The palette is made of a specific configurable colors and
-        predefined semitransparent shades of gray. Both need to
-        be resolved to opaque colors with the base colors of the sections. 
-
-        Resolving the colors can be done in 2 ways:
-
-            - render time
-
-              This actually means, that we do not create opaque colors and
-              create the scene graph nodes with semitransparent colors.
-
-            - definition time
-
-              We create opaque colors for the base colors of the sections
-              and set them as skin hints.
-
-        Resolving at render time sounds like the right solution as we
-        background colors set in application code will just work.
-
-        Unfortunately we have 2 different sets of grays for light/dark
-        base colors and when applications are setting a light color, where a
-        dark color ( or v.v ) is expected we might end up with unacceptable
-        results: ( white on light or black on dark ).
-
-        So there are pros and cons and we do not have a final opinion
-        about waht to do. For the moment we implement resolving at definition
-        time as an option to be able to play with both solutions.
-     */
-    const bool resolveTransparencies = true;
-
-    for ( const auto& entry : table )
-    {
-        (this->*entry.setupMetrics)();
-
-        if ( entry.setupColors )
-        {
-            (this->*entry.setupColors)( QskAspect::Body );
-
-            if ( resolveTransparencies )
-            {
-                const auto baseColor = sectionColor( QskAspect::Body );
-
-                for ( int i = QskAspect::Body + 1; i <= QskAspect::Floating; i++ )
-                {
-                    const auto section = static_cast< QskAspect::Section >( i );
-
-                    const auto baseSection = sectionColor( section );
-                    if ( baseSection != baseColor )
-                        (this->*entry.setupColors)( section );
-                }
-            }
-        }
-    }
+    setupBoxMetrics();
+    setupCheckBoxMetrics();
+    setupComboBoxMetrics();
+    setupDialogButtonBoxMetrics();
+    setupListViewMetrics();
+    setupMenuMetrics();
+    setupPageIndicatorMetrics();
+    setupProgressBarMetrics();
+    setupPushButtonMetrics();
+    setupRadioBoxMetrics();
+    setupScrollViewMetrics();
+    setupSegmentedBarMetrics();
+    setupSeparatorMetrics();
+    setupSliderMetrics();
+    setupSpinBoxMetrics();
+    setupSwitchButtonMetrics();
+    setupTabButtonMetrics();
+    setupTabBarMetrics();
+    setupTabViewMetrics();
+    setupTextInputMetrics();
+    setupTextLabelMetrics();
+    setupVirtualKeyboardMetrics();
 }
 
-void Editor::setupBox()
+void Editor::setupColors( QskAspect::Section section, const QskFluent2Theme& theme )
 {
-    using Q = QskBox;
-    using A = QskAspect;
+    if ( section == QskAspect::Body )
+    {
+        // TODO
+        setupFocusIndicator( theme );
+        setupInputPanel( theme );
+        setupPopup( theme );
+        setupSubWindow( theme );
+    }
 
-    setGradient( Q::Panel, sectionColor( A::Body ) );
-    setGradient( Q::Panel | A::Header, sectionColor( A::Header ) );
-    setGradient( Q::Panel | A::Footer, sectionColor( A::Footer ) );
+    setupBoxColors( section, theme );
+    setupCheckBoxColors( section, theme );
+    setupComboBoxColors( section, theme );
+    setupDialogButtonBoxColors( section, theme );
+    setupListViewColors( section, theme );
+    setupMenuColors( section, theme );
+    setupPageIndicatorColors( section, theme );
+    setupProgressBarColors( section, theme );
+    setupPushButtonColors( section, theme );
+    setupRadioBoxColors( section, theme );
+    setupScrollViewColors( section, theme );
+    setupSegmentedBarColors( section, theme );
+    setupSeparatorColors( section, theme );
+    setupSliderColors( section, theme );
+    setupSwitchButtonColors( section, theme );
+    setupSpinBoxColors( section, theme );
+    setupTabButtonColors( section, theme );
+    setupTabBarColors( section, theme );
+    setupTabViewColors( section, theme );
+    setupTextInputColors( section, theme );
+    setupTextLabelColors( section, theme );
+    setupVirtualKeyboardColors( section, theme );
+};
+
+
+void Editor::setupBoxMetrics()
+{
+}
+
+void Editor::setupBoxColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
+{
+    setGradient( QskBox::Panel | section,
+        theme.palette.background.solid.primary );
 }
 
 void Editor::setupCheckBoxMetrics()
@@ -338,13 +370,13 @@ void Editor::setupCheckBoxMetrics()
     setFontRole( Q::Text, QskFluent2Skin::Body );
 }
 
-void Editor::setupCheckBoxColors( QskAspect::Section section )
+void Editor::setupCheckBoxColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
 {
     using Q = QskCheckBox;
     using A = QskAspect;
 
     const auto& pal = theme.palette;
-    const auto baseColor = sectionColor( section );
 
     const auto checkMark = symbol( "checkmark" );
 
@@ -426,7 +458,7 @@ void Editor::setupCheckBoxColors( QskAspect::Section section )
                         fillColor = QskRgb::DarkRed;
                 }
 #endif
-                fillColor = rgbSolid2( fillColor, baseColor );
+                fillColor = rgbSolid2( fillColor, pal.background.solid.primary );
                 setGradient( box, fillColor );
 
                 borderColor = rgbSolid2( borderColor, fillColor );
@@ -470,12 +502,12 @@ void Editor::setupComboBoxMetrics()
     setBoxBorderMetrics( Q::Panel | Q::Focused, { 1, 1, 1, 2 } );
 }
 
-void Editor::setupComboBoxColors( QskAspect::Section section )
+void Editor::setupComboBoxColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
 {
     using Q = QskComboBox;
     using W = QskFluent2Skin;
 
-    const auto baseColor = sectionColor( section );
     const auto& pal = theme.palette;
 
     for ( const auto state : { QskAspect::NoState, Q::Hovered, Q::Focused, Q::Disabled } )
@@ -517,7 +549,7 @@ void Editor::setupComboBoxColors( QskAspect::Section section )
         const auto icon = Q::Icon | section | state;
         const auto indicator = Q::StatusIndicator | section | state;
 
-        panelColor = rgbSolid2( panelColor, baseColor );
+        panelColor = rgbSolid2( panelColor, pal.background.solid.primary );
 
         setGradient( panel, panelColor );
         setBoxBorderGradient( panel, borderColor1, borderColor2, panelColor );
@@ -537,16 +569,19 @@ void Editor::setupComboBoxColors( QskAspect::Section section )
     }
 }
 
-void Editor::setupDialogButtonBox()
+void Editor::setupDialogButtonBoxMetrics()
 {
-    using Q = QskDialogButtonBox;
-    const auto& pal = theme.palette;
-
-    setPadding( Q::Panel, 20 );
-    setGradient( Q::Panel, pal.background.solid.base );
+    setPadding( QskDialogButtonBox::Panel, 20 );
 }
 
-void Editor::setupFocusIndicator()
+void Editor::setupDialogButtonBoxColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
+{
+    setGradient( QskDialogButtonBox::Panel | section,
+        theme.palette.background.solid.primary );
+}
+
+void Editor::setupFocusIndicator( const QskFluent2Theme& theme )
 {
     using Q = QskFocusIndicator;
     const auto& pal = theme.palette;
@@ -562,32 +597,55 @@ void Editor::setupFocusIndicator()
     setBoxBorderColors( Q::Panel, pal.strokeColor.focus.outer );
 }
 
-void Editor::setupInputPanel()
+void Editor::setupInputPanel( const QskFluent2Theme& theme )
+{
+    Q_UNUSED( theme );
+}
+
+void Editor::setupListViewMetrics()
 {
 }
 
-void Editor::setupListView()
+void Editor::setupListViewColors( QskAspect::Section, const QskFluent2Theme& )
 {
 }
 
-void Editor::setupMenu()
+void Editor::setupMenuMetrics()
 {
     using Q = QskMenu;
-    const auto& pal = theme.palette;
 
     setPadding( Q::Panel, { 4, 6, 4, 6 } );
     setBoxBorderMetrics( Q::Panel, 1 );
-    setBoxBorderColors( Q::Panel, pal.strokeColor.surface.flyout );
     setBoxShape( Q::Panel, 7 );
-    setGradient( Q::Panel, pal.background.flyout.defaultColor );
-    setShadowMetrics( Q::Panel, theme.shadow.flyout.metrics );
-    setShadowColor( Q::Panel, theme.shadow.flyout.color );
 
     setPadding( Q::Segment, { 0, 10, 0, 10 } );
     setSpacing( Q::Segment, 15 );
+    setBoxBorderMetrics( Q::Segment | Q::Selected, { 3, 0, 0, 0 } );
+
+    setFontRole( Q::Text, QskFluent2Skin::Body );
+
+    setStrutSize( Q::Icon, 12, 12 );
+    setPadding( Q::Icon, { 8, 8, 0, 8 } );
+}
+
+void Editor::setupMenuColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
+{
+    Q_UNUSED( section );
+
+    using Q = QskMenu;
+
+#if 1
+    setShadowMetrics( Q::Panel, theme.shadow.flyout.metrics );
+#endif
+
+    const auto& pal = theme.palette;
+
+    setBoxBorderColors( Q::Panel, pal.strokeColor.surface.flyout );
+    setGradient( Q::Panel, pal.background.flyout.defaultColor );
+    setShadowColor( Q::Panel, theme.shadow.flyout.color );
 
     setGradient( Q::Segment | Q::Selected, pal.fillColor.subtle.secondary );
-    setBoxBorderMetrics( Q::Segment | Q::Selected, { 3, 0, 0, 0 } );
 
     QskGradient selectedGradient( { { 0.0, pal.fillColor.subtle.secondary },
                                     { 0.25, pal.fillColor.subtle.secondary },
@@ -597,15 +655,12 @@ void Editor::setupMenu()
                                     { 1.0, pal.fillColor.subtle.secondary } } );
     setBoxBorderColors( Q::Segment | Q::Selected, selectedGradient );
 
-    setFontRole( Q::Text, QskFluent2Skin::Body );
     setColor( Q::Text, pal.fillColor.text.primary );
 
-    setStrutSize( Q::Icon, 12, 12 );
-    setPadding( Q::Icon, { 8, 8, 0, 8 } );
     setGraphicRole( Q::Icon, QskFluent2Skin::GraphicRoleFillColorTextPrimary );
 }
 
-void Editor::setupPageIndicator()
+void Editor::setupPageIndicatorMetrics()
 {
     /*
         This code has absolitely nothing to do with the Fluent2 specs.
@@ -613,7 +668,6 @@ void Editor::setupPageIndicator()
         the implementation has been done
      */
     using Q = QskPageIndicator;
-    using A = QskAspect;
 
     setSpacing( Q::Panel, 3 );
     setPadding( Q::Panel, 4 );
@@ -627,52 +681,58 @@ void Editor::setupPageIndicator()
 
     setMargin( Q::Bullet, 1 );
     setMargin( Q::Bullet | Q::Selected, 0 );
-
-    // colors
-
-    const auto baseBody = sectionColor( A::Body );
-    const auto& pal = theme.palette;
-
-    for ( int i = A::Body; i <= A::Floating; i++ )
-    {
-        const auto section = static_cast< A::Section >( i );
-
-        const auto baseColor = sectionColor( section );
-        if ( baseColor != baseBody || section == A::Body)
-        {
-            auto panelColor = pal.fillColor.control.secondary;
-#if 0
-            panelColor = rgbSolid2( panelColor, baseColor );
-#endif
-
-            setGradient( Q::Panel, panelColor );
-
-            setGradient( Q::Bullet, pal.fillColor.controlStrong.defaultColor );
-            setGradient( Q::Bullet | Q::Selected, pal.fillColor.accent.defaultColor );
-        }
-    }
 }
 
-void Editor::setupPopup()
+void Editor::setupPageIndicatorColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
+{
+    using Q = QskPageIndicator;
+
+    const auto& pal = theme.palette;
+
+    auto panelColor = pal.fillColor.control.secondary;
+#if 0
+    panelColor = rgbSolid2( panelColor, pal.background.solid.base );
+#endif
+
+    const auto panel = Q::Panel | section;
+    const auto bullet = Q::Bullet | section;
+
+    setGradient( panel, panelColor );
+
+    setGradient( bullet, pal.fillColor.controlStrong.defaultColor );
+    setGradient( bullet | Q::Selected, pal.fillColor.accent.defaultColor );
+}
+
+void Editor::setupPopup( const QskFluent2Theme& theme )
 {
     using Q = QskPopup;
+
     const auto& pal = theme.palette;
 
     setGradient( Q::Overlay, pal.background.overlay.defaultColor );
 }
 
-void Editor::setupProgressBar()
+void Editor::setupProgressBarMetrics()
 {
     using Q = QskProgressBar;
     using A = QskAspect;
-    const auto& pal = theme.palette;
 
     setMetric( Q::Groove | A::Size, 1 );
     setBoxShape( Q::Groove, 100, Qt::RelativeSize );
-    setGradient( Q::Groove, pal.strokeColor.controlStrong.defaultColor );
 
     setMetric( Q::Bar | A::Size, 3 );
     setBoxShape( Q::Bar, 100, Qt::RelativeSize );
+}
+
+void Editor::setupProgressBarColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
+{
+    using Q = QskProgressBar;
+
+    const auto& pal = theme.palette;
+
+    setGradient( Q::Groove, pal.strokeColor.controlStrong.defaultColor );
     setGradient( Q::Bar, pal.fillColor.accent.defaultColor );
 }
 
@@ -694,13 +754,13 @@ void Editor::setupPushButtonMetrics()
     setFontRole( Q::Text, W::Body );
 }
 
-void Editor::setupPushButtonColors( QskAspect::Section section )
+void Editor::setupPushButtonColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
 {
     using Q = QskPushButton;
     using W = QskFluent2Skin;
 
     const auto& pal = theme.palette;
-    const auto baseColor = sectionColor( section );
 
     for ( const auto variation : { QskAspect::NoVariation, W::Accent } )
     {
@@ -780,7 +840,7 @@ void Editor::setupPushButtonColors( QskAspect::Section section )
                 }
             }
 
-            panelColor = rgbSolid2( panelColor, baseColor );
+            panelColor = rgbSolid2( panelColor, pal.background.solid.primary );
 
             setGradient( panel | state, panelColor );
 
@@ -834,14 +894,13 @@ void Editor::setupRadioBoxMetrics()
     setFontRole( Q::Text, QskFluent2Skin::Body );
 }
 
-void Editor::setupRadioBoxColors( QskAspect::Section section )
+void Editor::setupRadioBoxColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
 {
     using Q = QskRadioBox;
     using A = QskAspect;
 
     const auto& pal = theme.palette;
-
-    const auto baseColor = sectionColor( section );
 
     for ( const auto state1 : { A::NoState, Q::Hovered, Q::Pressed, Q::Disabled } )
     {
@@ -904,10 +963,8 @@ void Editor::setupRadioBoxColors( QskAspect::Section section )
 
 #if 0
             // we have different colors when making colors solid early. TODO ...
-            panelColor = rgbSolid2( panelColor, baseColor );
-            indicatorColor = rgbSolid2( indicatorColor, baseColor );
-#else
-            Q_UNUSED( baseColor );
+            panelColor = rgbSolid2( panelColor, pal.background.solid.base );
+            indicatorColor = rgbSolid2( indicatorColor, pal.background.solid.base );
 #endif
             setBoxBorderGradient( indicator, pal.elevation.circle.border, panelColor );
 
@@ -921,7 +978,11 @@ void Editor::setupRadioBoxColors( QskAspect::Section section )
     }
 }
 
-void Editor::setupScrollView()
+void Editor::setupScrollViewMetrics()
+{
+}
+
+void Editor::setupScrollViewColors( QskAspect::Section, const QskFluent2Theme& )
 {
 }
 
@@ -946,17 +1007,18 @@ void Editor::setupSegmentedBarMetrics()
     setPadding( Q::Segment, { 8, 0, 8, 0 } );
 }
 
-void Editor::setupSegmentedBarColors( QskAspect::Section section )
+void Editor::setupSegmentedBarColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
 {
     using Q = QskSegmentedBar;
     using A = QskAspect;
     using W = QskFluent2Skin;
 
-    const auto baseColor = sectionColor( section );
-
     const auto& pal = theme.palette;
 
-    const auto panelColor = rgbSolid2( pal.fillColor.control.defaultColor, baseColor );
+    auto panelColor = pal.fillColor.control.defaultColor;
+    panelColor = rgbSolid2( panelColor, pal.background.solid.primary );
+
     setGradient( Q::Panel, panelColor );
 
     for ( const auto state1 : { A::NoState, Q::Hovered, Q::Disabled } )
@@ -1015,7 +1077,7 @@ void Editor::setupSegmentedBarColors( QskAspect::Section section )
             const auto text = Q::Text | section | states;
             const auto icon = Q::Icon | section | states;
 
-            segmentColor = rgbSolid2( segmentColor, baseColor );
+            segmentColor = rgbSolid2( segmentColor, pal.background.solid.primary );
 
             setGradient( segment, segmentColor );
             setBoxBorderGradient( segment, borderColor1, borderColor2, panelColor );
@@ -1027,61 +1089,72 @@ void Editor::setupSegmentedBarColors( QskAspect::Section section )
     }
 }
 
-void Editor::setupSeparator()
+void Editor::setupSeparatorMetrics()
 {
     using A = QskAspect;
     using Q = QskSeparator;
 
-    const auto& pal = theme.palette;
-
-    for ( auto variation : { A::Horizontal, A::Vertical } )
-    {
-        const auto aspect = Q::Panel | variation;
-
-        setMetric( aspect | A::Size, 1 );
-        setBoxShape( Q::Panel, 0 );
-        setBoxBorderMetrics( Q::Panel, 0 );
-        setGradient( aspect, pal.strokeColor.divider.defaultColor );
-    }
+    setMetric( Q::Panel | A::Size, 1 );
+    setBoxShape( Q::Panel, 0 );
+    setBoxBorderMetrics( Q::Panel, 0 );
 }
 
-void Editor::setupSlider()
+void Editor::setupSeparatorColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
+{
+    using Q = QskSeparator;
+
+    const auto& pal = theme.palette;
+    setGradient( Q::Panel, pal.strokeColor.divider.defaultColor );
+}
+
+void Editor::setupSliderMetrics()
 {
     using Q = QskSlider;
     using A = QskAspect;
-    const auto& pal = theme.palette;
 
     const qreal extent = 22;
     setMetric( Q::Panel | A::Size, extent );
     setBoxShape( Q::Panel, 0 );
     setBoxBorderMetrics( Q::Panel, 0 );
-    setGradient( Q::Panel, {} );
 
     setPadding( Q::Panel | A::Horizontal, QskMargins( 0.5 * extent, 0 ) );
     setPadding( Q::Panel | A::Vertical, QskMargins( 0, 0.5 * extent ) );
 
     setMetric( Q::Groove | A::Size, 4 );
-    setGradient( Q::Groove, pal.fillColor.controlStrong.defaultColor );
     setBoxShape( Q::Groove, 100, Qt::RelativeSize );
 
     setMetric( Q::Fill | A::Size, 4 );
-    setGradient( Q::Fill, pal.fillColor.accent.defaultColor );
     setBoxShape( Q::Fill, 100, Qt::RelativeSize );
 
     setStrutSize( Q::Handle, { 22, 22 } );
-    setGradient( Q::Handle, pal.fillColor.controlSolid.defaultColor );
     setBoxShape( Q::Handle, 100, Qt::RelativeSize );
     setBoxBorderMetrics( Q::Handle, 1 );
-    setBoxBorderGradient( Q::Handle, pal.elevation.circle.border,
-        pal.fillColor.controlSolid.defaultColor );
 
     setStrutSize( Q::Ripple, { 12, 12 } );
-    setGradient( Q::Ripple, pal.fillColor.accent.defaultColor );
     setBoxShape( Q::Ripple, 100, Qt::RelativeSize );
 
     setStrutSize( Q::Ripple | Q::Hovered, { 14, 14 } );
 
     setStrutSize( Q::Ripple | Q::Pressed, { 10, 10 } );
+}
+
+void Editor::setupSliderColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
+{
+    using Q = QskSlider;
+    const auto& pal = theme.palette;
+
+    setGradient( Q::Panel, {} );
+    setGradient( Q::Groove, pal.fillColor.controlStrong.defaultColor );
+
+    setGradient( Q::Fill, pal.fillColor.accent.defaultColor );
+    setGradient( Q::Handle, pal.fillColor.controlSolid.defaultColor );
+
+    setBoxBorderGradient( Q::Handle, pal.elevation.circle.border,
+        pal.fillColor.controlSolid.defaultColor );
+
+    setGradient( Q::Ripple, pal.fillColor.accent.defaultColor );
     setGradient( Q::Ripple | Q::Pressed, pal.fillColor.accent.tertiary );
 
     setGradient( Q::Groove | Q::Disabled, pal.fillColor.controlStrong.disabled );
@@ -1089,10 +1162,9 @@ void Editor::setupSlider()
     setGradient( Q::Ripple | Q::Disabled, pal.fillColor.controlStrong.disabled );
 }
 
-void Editor::setupSpinBox()
+void Editor::setupSpinBoxMetrics()
 {
     using Q = QskSpinBox;
-    const auto& pal = theme.palette;
 
     setHint( Q::Panel | QskAspect::Style, Q::ButtonsRight );
     setStrutSize( Q::Panel, { -1, 32 } );
@@ -1100,26 +1172,35 @@ void Editor::setupSpinBox()
     setBoxShape( Q::Panel, 3 );
     setPadding( Q::Panel, { 11, 0, 11, 0 } );
 
-    setGradient( Q::Panel, pal.fillColor.control.defaultColor );
-    setBoxBorderGradient( Q::Panel,
-        pal.elevation.control.border, pal.fillColor.control.defaultColor );
-
     setAlignment( Q::Text, Qt::AlignLeft );
     setFontRole( Q::Text, QskFluent2Skin::Body );
-    setColor( Q::Text, pal.fillColor.text.primary );
 
     setPadding( Q::TextPanel, { 11, 5, 0, 0 } );
 
-    setStrutSize( Q::UpPanel, 16, 16 );
-    setStrutSize( Q::DownPanel, 16, 16 );
-
     setStrutSize( Q::UpPanel, 32, 20 );
     setPadding( Q::UpPanel, { 11, 7, 11, 7 } );
+
     setStrutSize( Q::DownPanel, 34, 20 );
     setPadding( Q::DownPanel, { 11, 7, 13, 7 } );
 
     setSymbol( Q::UpIndicator, symbol( "spin-box-arrow-up" ) );
     setSymbol( Q::DownIndicator, symbol( "spin-box-arrow-down" ) );
+
+    // Focused (Pressed doesn't exist yet):
+    setBoxBorderMetrics( Q::Panel | Q::Focused, { 1, 1, 1, 2 } );
+}
+
+void Editor::setupSpinBoxColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
+{
+    using Q = QskSpinBox;
+    const auto& pal = theme.palette;
+
+    setGradient( Q::Panel, pal.fillColor.control.defaultColor );
+    setBoxBorderGradient( Q::Panel,
+        pal.elevation.control.border, pal.fillColor.control.defaultColor );
+
+    setColor( Q::Text, pal.fillColor.text.primary );
 
     setGraphicRole( Q::UpIndicator, QskFluent2Skin::GraphicRoleFillColorTextSecondary );
     setGraphicRole( Q::DownIndicator, QskFluent2Skin::GraphicRoleFillColorTextSecondary );
@@ -1131,8 +1212,6 @@ void Editor::setupSpinBox()
         pal.elevation.textControl.border, pal.fillColor.control.secondary );
 
     // Focused (Pressed doesn't exist yet):
-
-    setBoxBorderMetrics( Q::Panel | Q::Focused, { 1, 1, 1, 2 } );
 
     setGradient( Q::Panel | Q::Focused, pal.fillColor.control.inputActive );
 
@@ -1157,15 +1236,18 @@ void Editor::setupSpinBox()
         QskFluent2Skin::GraphicRoleFillColorTextDisabled );
 }
 
-void Editor::setupTabBar()
+void Editor::setupTabBarMetrics()
 {
-    setGradient( QskTabBar::Panel, sectionColor( QskAspect::Body ) );
 }
 
-void Editor::setupTabButton()
+void Editor::setupTabBarColors( QskAspect::Section, const QskFluent2Theme& theme )
+{
+    setGradient( QskTabBar::Panel, theme.palette.background.solid.primary );
+}
+
+void Editor::setupTabButtonMetrics()
 {
     using Q = QskTabButton;
-    const auto& pal = theme.palette;
 
     setStrutSize( Q::Panel, { -1, 31 } );
     setPadding( Q::Panel, { 7, 0, 7, 0 } );
@@ -1173,21 +1255,28 @@ void Editor::setupTabButton()
 
     setAlignment( Q::Text, Qt::AlignLeft | Qt::AlignVCenter );
 
-    const auto baseColor = sectionColor( QskAspect::Body );
-
     setBoxBorderMetrics( Q::Panel, { 0, 0, 0, 1 } );
+    setBoxBorderMetrics( Q::Panel | Q::Checked, { 1, 1, 1, 0 } );
+
+    setFontRole( Q::Text, QskFluent2Skin::Body );
+    setFontRole( Q::Text | Q::Checked, QskFluent2Skin::BodyStrong );
+}
+
+void Editor::setupTabButtonColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
+{
+    using Q = QskTabButton;
+    const auto& pal = theme.palette;
 
     for ( const auto state : { QskAspect::NoState, 
         Q::Checked, Q::Hovered, Q::Pressed, Q::Disabled } )
     {
         QRgb panelColor, textColor;
-        int fontRole = QskFluent2Skin::Body;
 
         if ( state == Q::Checked )
         {
-            panelColor = pal.background.solid.tertiary;
+            panelColor = pal.background.solid.secondary;
             textColor = pal.fillColor.text.primary;
-            fontRole = QskFluent2Skin::BodyStrong;
         }
         else if ( state == Q::Hovered )
         {
@@ -1210,59 +1299,72 @@ void Editor::setupTabButton()
             textColor = pal.fillColor.text.secondary;
         }
 
-        const auto panel = Q::Panel | state;
-        const auto text = Q::Text | state;
+        const auto panel = Q::Panel | section | state;
+        const auto text = Q::Text | section | state;
 
-        panelColor = rgbSolid2( panelColor, baseColor );
+        panelColor = rgbSolid2( panelColor, pal.background.solid.primary );
         setGradient( panel, panelColor );
 
-        const auto borderColor = rgbSolid2( pal.strokeColor.card.defaultColor, panelColor );
+        const auto borderColor = rgbSolid2(
+            pal.strokeColor.tab.defaultColor, pal.background.solid.primary );
+
         setBoxBorderColors( panel, borderColor );
 
-        if ( state == Q::Checked )
-            setBoxBorderMetrics( panel, { 1, 1, 1, 0 } );
-        else
-            setBoxBorderMetrics( panel, { 0, 0, 0, 1 } );
-
-        setFontRole( text, fontRole );
         setColor( text, textColor );
     }
 }
 
-void Editor::setupTabView()
+void Editor::setupTabViewMetrics()
 {
-    using Q = QskTabView;
-    const auto& pal = theme.palette;
-
-    const auto baseColor = sectionColor( QskAspect::Body );
-    const auto pageColor = rgbSolid2( pal.background.solid.tertiary, baseColor );
-
-    setGradient( Q::Page, pageColor );
 }
 
-void Editor::setupTextLabel()
+void Editor::setupTabViewColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
+{
+    using Q = QskTabView;
+    setGradient( Q::Page | section, theme.palette.background.solid.secondary );
+}
+
+void Editor::setupTextLabelMetrics()
+{
+    using Q = QskTextLabel;
+
+    setPadding( Q::Panel, 10 );
+    setFontRole( Q::Text, QskFluent2Skin::Body );
+}
+
+void Editor::setupTextLabelColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
 {
     using Q = QskTextLabel;
     const auto& pal = theme.palette;
 
-    setPadding( Q::Panel, 10 );
-
-    setFontRole( Q::Text, QskFluent2Skin::Body );
     setColor( Q::Text, pal.fillColor.text.primary );
 }
 
-void Editor::setupTextInput()
+void Editor::setupTextInputMetrics()
+{
+    using Q = QskTextInput;
+
+    setStrutSize( Q::Panel, { -1, 30 } );
+    setPadding( Q::Panel, { 11, 0, 11, 0 } );
+
+    setBoxBorderMetrics( Q::Panel, 1 );
+    for( const auto& state : { Q::Focused, Q::Editing } )
+        setBoxBorderMetrics( Q::Panel | state, { 1, 1, 1, 2 } );
+
+    setBoxShape( Q::Panel, 3 );
+
+    setAlignment( Q::Text, Qt::AlignLeft | Qt::AlignVCenter );
+    setFontRole( Q::Text, QskFluent2Skin::Body );
+}
+
+void Editor::setupTextInputColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
 {
     using Q = QskTextInput;
     const auto& pal = theme.palette;
 
-    setStrutSize( Q::Panel, { -1, 30 } );
-    setBoxBorderMetrics( Q::Panel, 1 );
-    setBoxShape( Q::Panel, 3 );
-    setPadding( Q::Panel, { 11, 0, 11, 0 } );
-
-    setAlignment( Q::Text, Qt::AlignLeft | Qt::AlignVCenter );
-    setFontRole( Q::Text, QskFluent2Skin::Body );
     setColor( Q::Text, pal.fillColor.text.secondary );
 
     setGradient( Q::Panel, pal.fillColor.control.defaultColor );
@@ -1283,8 +1385,6 @@ void Editor::setupTextInput()
 
     for( const auto& state : { Q::Focused, Q::Editing } )
     {
-        setBoxBorderMetrics( Q::Panel | state, { 1, 1, 1, 2 } );
-
         setGradient( Q::Panel | state, pal.fillColor.control.inputActive );
 
         auto gradient = pal.elevation.textControl.border;
@@ -1302,11 +1402,10 @@ void Editor::setupTextInput()
     setColor( Q::Text | Q::Disabled, pal.fillColor.text.disabled );
 }
 
-void Editor::setupSwitchButton()
+void Editor::setupSwitchButtonMetrics()
 {
     using Q = QskSwitchButton;
     using A = QskAspect;
-    const auto& pal = theme.palette;
 
     const QSizeF strutSize( 38, 18 );
     setStrutSize( Q::Groove | A::Horizontal, strutSize );
@@ -1323,13 +1422,36 @@ void Editor::setupSwitchButton()
 
     setBoxBorderMetrics( Q::Handle | Q::Checked, 1 );
 
-    // ### big size during animation
+    setStrutSize( Q::Handle, 12, 12 );
+
+    setStrutSize( Q::Handle | Q::Hovered, 14, 14,
+        { QskStateCombination::CombinationNoState, Q::Checked } );
+
+    const QSizeF pressedSize( 17, 14 );
+
+    setStrutSize( Q::Handle | Q::Pressed | A::Horizontal,
+        pressedSize, { QskStateCombination::CombinationNoState, Q::Checked }  );
+
+    setStrutSize( Q::Handle | Q::Pressed | A::Vertical,
+        pressedSize.transposed(), { QskStateCombination::CombinationNoState, Q::Checked }  );
+
+    setStrutSize( Q::Handle | Q::Disabled, 12, 12,
+        { QskStateCombination::CombinationNoState, Q::Checked } );
+
+    setBoxBorderMetrics( Q::Handle | Q::Disabled | Q::Checked, 1 );
+}
+
+void Editor::setupSwitchButtonColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
+{
+    using Q = QskSwitchButton;
+
+    const auto& pal = theme.palette;
 
     setGradient( Q::Groove, pal.fillColor.controlAlt.secondary );
     setGradient( Q::Groove | Q::Checked, pal.fillColor.accent.defaultColor );
     setBoxBorderColors( Q::Groove, pal.strokeColor.controlStrong.defaultColor );
 
-    setStrutSize( Q::Handle, 12, 12 );
     setGradient( Q::Handle, pal.strokeColor.controlStrong.defaultColor );
     setGradient( Q::Handle | Q::Checked, pal.fillColor.textOnAccent.primary );
 
@@ -1340,10 +1462,7 @@ void Editor::setupSwitchButton()
     setGradient( Q::Groove | Q::Hovered | Q::Checked, pal.fillColor.accent.secondary );
     setBoxBorderColors( Q::Groove | Q::Hovered, pal.fillColor.text.secondary );
 
-    setStrutSize( Q::Handle | Q::Hovered, 14, 14,
-        { QskStateCombination::CombinationNoState, Q::Checked } );
     setGradient( Q::Handle | Q::Hovered, pal.fillColor.text.secondary );
-    // Handle | Hovered | Checked is the same as in Rest state
 
     setBoxBorderGradient( Q::Handle | Q::Hovered | Q::Checked,
         pal.elevation.circle.border, pal.fillColor.accent.secondary );
@@ -1352,16 +1471,7 @@ void Editor::setupSwitchButton()
     setGradient( Q::Groove | Q::Pressed | Q::Checked, pal.fillColor.accent.tertiary );
     setBoxBorderColors( Q::Groove | Q::Pressed, pal.strokeColor.controlStrong.defaultColor );
 
-    const QSizeF pressedSize( 17, 14 );
-
-    setStrutSize( Q::Handle | Q::Pressed | A::Horizontal,
-        pressedSize, { QskStateCombination::CombinationNoState, Q::Checked }  );
-
-    setStrutSize( Q::Handle | Q::Pressed | A::Vertical,
-        pressedSize.transposed(), { QskStateCombination::CombinationNoState, Q::Checked }  );
-
     setGradient( Q::Handle | Q::Pressed, pal.strokeColor.controlStrong.defaultColor );
-    // Handle | Pressed | Checked is the same as in Rest state
 
     setBoxBorderGradient( Q::Handle | Q::Pressed | Q::Checked,
         pal.elevation.circle.border, pal.fillColor.accent.tertiary );
@@ -1371,15 +1481,11 @@ void Editor::setupSwitchButton()
     setGradient( Q::Groove | Q::Disabled | Q::Checked, pal.fillColor.accent.disabled );
     setBoxBorderColors( Q::Groove | Q::Disabled | Q::Checked, pal.fillColor.accent.disabled );
 
-    setStrutSize( Q::Handle | Q::Disabled, 12, 12,
-        { QskStateCombination::CombinationNoState, Q::Checked } );
-
     setGradient( Q::Handle | Q::Disabled, pal.fillColor.text.disabled );
     setGradient( Q::Handle | Q::Disabled | Q::Checked, pal.fillColor.textOnAccent.disabled );
-    setBoxBorderMetrics( Q::Handle | Q::Disabled | Q::Checked, 1 );
 }
 
-void Editor::setupSubWindow()
+void Editor::setupSubWindow( const QskFluent2Theme& theme )
 {
     using Q = QskSubWindow;
     const auto& pal = theme.palette;
@@ -1401,32 +1507,51 @@ void Editor::setupSubWindow()
     setTextOptions( Q::TitleBarText, Qt::ElideRight, QskTextOptions::NoWrap );
 }
 
-void Editor::setupVirtualKeyboard()
+void Editor::setupVirtualKeyboardMetrics()
 {
     using Q = QskVirtualKeyboard;
-    const auto& pal = theme.palette;
 
     setMargin( Q::ButtonPanel, 2 );
+    setFontRole( Q::ButtonText, QskFluent2Skin::BodyLarge );
+    setPadding( Q::Panel, 8 );
+}
+
+void Editor::setupVirtualKeyboardColors(
+    QskAspect::Section, const QskFluent2Theme& theme )
+{
+    using Q = QskVirtualKeyboard;
+
+    const auto& pal = theme.palette;
+
     setGradient( Q::ButtonPanel, pal.fillColor.control.defaultColor );
     setGradient( Q::ButtonPanel | Q::Hovered, pal.fillColor.control.secondary );
     setGradient( Q::ButtonPanel | QskPushButton::Pressed, pal.fillColor.control.tertiary );
 
     setColor( Q::ButtonText, pal.fillColor.text.primary );
-    setFontRole( Q::ButtonText, QskFluent2Skin::BodyLarge );
     setColor( Q::ButtonText | QskPushButton::Pressed, pal.fillColor.text.secondary );
 
-    setGradient( Q::Panel, pal.background.solid.secondary );
-    setPadding( Q::Panel, 8 );
+    setGradient( Q::Panel, pal.background.solid.tertiary );
 }
 
-QskFluent2Skin::QskFluent2Skin( const QskFluent2Theme& theme, QObject* parent )
+QskFluent2Skin::QskFluent2Skin( QObject* parent )
     : Inherited( parent )
 {
     setupFonts();
-    setupGraphicFilters( theme );
 
-    Editor editor( &hintTable(), theme );
-    editor.setup();
+    Editor editor( &hintTable() );
+    editor.setupMetrics();
+}
+
+void QskFluent2Skin::addTheme( QskAspect::Section section, const QskFluent2Theme& theme )
+{
+    if ( section == QskAspect::Body )
+    {
+        // design flaw: we can't have section sensitive filters. TODO ..
+        setupGraphicFilters( theme );
+    }
+
+    Editor editor( &hintTable() );
+    editor.setupColors( section, theme );
 }
 
 QskFluent2Skin::~QskFluent2Skin()

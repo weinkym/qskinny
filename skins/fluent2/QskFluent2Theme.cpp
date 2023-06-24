@@ -14,24 +14,18 @@ namespace
     }
 }
 
-QskFluent2Theme::QskFluent2Theme( Theme lightness )
-    : QskFluent2Theme( lightness,
-                        { // default Fluent accent colors:
-                          0xff98ecfe,
-                          0xff60ccfe,
-                          0xff0093f9,
-                          0xff0078d4,
-                          0xff005eb7,
-                          0xff003d92,
-                          0xff001968
-                        } )
-{
-}
-
 QskFluent2Theme::QskFluent2Theme( Theme theme,
-    const std::array< QRgb, NumAccentColors >& accentColors )
+    const BaseColors& baseColors, const AccentColors& accentColors )
 {
     using namespace QskRgb;
+
+    {
+        auto& colors = palette.background;
+
+        colors.solid.primary = baseColors.primary;
+        colors.solid.secondary = baseColors.secondary;
+        colors.solid.tertiary = baseColors.tertiary;
+    }
 
     if( theme == Light )
     {
@@ -43,9 +37,10 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
             colors.text.tertiary = rgbGray( 0, 0.4458 );
             colors.text.disabled = rgbGray( 0, 0.3614 );
 
-            colors.accentText.primary = accentColors[ AccentDark2 ];
-            colors.accentText.secondary = accentColors[ AccentDark3 ];
-            colors.accentText.tertiary = accentColors[ AccentDark1 ];
+            colors.accentText.primary = accentColors.tertiary;
+            colors.accentText.secondary = accentColors.quaternary;
+            colors.accentText.tertiary = accentColors.secondary;
+
             colors.accentText.disabled = rgbGray( 0, 0.3614 );
 
             colors.textOnAccent.primary = rgbGray( 255 );
@@ -73,11 +68,11 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
             colors.controlAlt.quaternary = rgbGray( 0, 0.0924 );
             colors.controlAlt.disabled = Qt::transparent;
 
-            colors.accent.defaultColor = accentColors[ AccentDark1 ];
-            colors.accent.secondary = toTransparentF( accentColors[ AccentDark1 ], 0.90 );
-            colors.accent.tertiary = toTransparentF( accentColors[ AccentDark1 ], 0.80 );
+            colors.accent.defaultColor = accentColors.secondary;
+            colors.accent.secondary = toTransparentF( accentColors.secondary, 0.90 );
+            colors.accent.tertiary = toTransparentF( accentColors.secondary, 0.80 );
             colors.accent.disabled = rgbGray( 0, 0.2169 );
-            colors.accent.selectedTextBackground = accentColors[ AccentBase ];
+            colors.accent.selectedTextBackground = accentColors.primary;
         }
 
 #if 0
@@ -124,8 +119,7 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
             colors.controlStrong.defaultColor = rgbGray( 0, 0.4458 );
             colors.controlStrong.disabled = rgbGray( 0, 0.2169 );
 
-            colors.card.defaultColor = rgbGray( 0, 0.0578 );
-            colors.card.defaultSolid = rgbGray( 235 );
+            colors.tab.defaultColor = rgbGray( 0, 0.0578 );
 
             colors.divider.defaultColor = rgbGray( 0, 0.0803 );
 
@@ -139,26 +133,14 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
         {
             auto& colors = palette.background;
 
-            colors.card.defaultColor = rgbGray( 255, 0.70 );
-            colors.card.secondary = rgbGray( 246, 0.50 );
-            colors.card.tertiary = rgbGray( 255 );
-
             colors.overlay.defaultColor = rgbGray( 0, 0.30 );
-
             colors.layer.alt = rgbGray( 255 );
-
             colors.flyout.defaultColor = rgbGray( 252, 0.85 );
 
-            colors.solid.base = rgbGray( 243 );
-            colors.solid.secondary = rgbGray( 238 );
-            colors.solid.tertiary = rgbGray( 249 );
-            colors.solid.quaternary = rgbGray( 255 );
         }
 
         // Shadow:
 
-        shadow.cardRest = { QskShadowMetrics( 0, 4, QPointF( 0, 2 ) ), rgbGray( 0, 0.04 ) };
-        shadow.cardHover = { QskShadowMetrics( 0, 4, QPointF( 0, 2 ) ), rgbGray( 0, 0.10 ) };
         shadow.flyout = { QskShadowMetrics( 0, 16, QPointF( 0, 8 ) ), rgbGray( 0, 0.14 ) };
         // ### should actually be drawn twice with different values:
         shadow.dialog = { QskShadowMetrics( 0, 21, QPointF( 0, 2 ) ), rgbGray( 0, 0.1474 ) };
@@ -173,9 +155,9 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
             colors.text.tertiary = rgbGray( 255, 0.5442 );
             colors.text.disabled = rgbGray( 255, 0.3628 );
 
-            colors.accentText.primary = accentColors[ AccentLight3 ];
-            colors.accentText.secondary = accentColors[ AccentLight3 ];
-            colors.accentText.tertiary = accentColors[ AccentLight2 ];
+            colors.accentText.primary = accentColors.quaternary;
+            colors.accentText.secondary = accentColors.quaternary;
+            colors.accentText.tertiary = accentColors.tertiary;
             colors.accentText.disabled = rgbGray( 255, 0.3628 );
 
             colors.textOnAccent.primary = rgbGray( 0 );
@@ -203,11 +185,11 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
             colors.controlAlt.quaternary = rgbGray( 255, 0.0698 );
             colors.controlAlt.disabled = Qt::transparent;
 
-            colors.accent.defaultColor = accentColors[ AccentLight2 ];
-            colors.accent.secondary = toTransparentF( accentColors[ AccentLight2 ], 0.90 );
-            colors.accent.tertiary = toTransparentF( accentColors[ AccentLight2 ], 0.80 );
+            colors.accent.defaultColor = accentColors.tertiary;
+            colors.accent.secondary = toTransparentF( accentColors.tertiary, 0.90 );
+            colors.accent.tertiary = toTransparentF( accentColors.tertiary, 0.80 );
             colors.accent.disabled = rgbGray( 255, 0.1581 );
-            colors.accent.selectedTextBackground = accentColors[ AccentBase ];
+            colors.accent.selectedTextBackground = accentColors.primary;
         }
 
 #if 0
@@ -255,8 +237,7 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
             colors.controlStrong.defaultColor = rgbGray( 255, 0.5442 );
             colors.controlStrong.disabled = rgbGray( 255, 0.1581 );
 
-            colors.card.defaultColor = rgbGray( 255, 0.0578 );
-            colors.card.defaultSolid = rgbGray( 235 );
+            colors.tab.defaultColor = rgbGray( 255, 0.0578 );
 
             colors.divider.defaultColor = rgbGray( 255, 0.0837 );
 
@@ -270,26 +251,13 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
         {
             auto& colors = palette.background;
 
-            colors.card.defaultColor = rgbGray( 255, 0.0512 );
-            colors.card.secondary = rgbGray( 255, 0.0326 );
-            colors.card.tertiary = rgbGray( 255 ); // not set in Figma
-
             colors.overlay.defaultColor = rgbGray( 0, 0.30 );
-
             colors.layer.alt = rgbGray( 255, 0.0538 );
-
             colors.flyout.defaultColor = rgbGray( 44, 0.96 );
-
-            colors.solid.base = rgbGray( 32 );
-            colors.solid.secondary = rgbGray( 28 );
-            colors.solid.tertiary = rgbGray( 40 );
-            colors.solid.quaternary = rgbGray( 44 );
         }
 
         // Shadow:
 
-        shadow.cardRest = { QskShadowMetrics( 0, 4, QPointF( 0, 2 ) ), rgbGray( 0, 0.13 ) };
-        shadow.cardHover = { QskShadowMetrics( 0, 4, QPointF( 0, 2 ) ), rgbGray( 0, 0.26 ) };
         shadow.flyout = { QskShadowMetrics( 0, 16, QPointF( 0, 8 ) ), rgbGray( 0, 0.26 ) };
         // ### should actually be drawn twice with different values:
         shadow.dialog = { QskShadowMetrics( 0, 21, QPointF( 0, 2 ) ), rgbGray( 0, 0.37 ) };

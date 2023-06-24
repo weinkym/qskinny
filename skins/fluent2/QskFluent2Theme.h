@@ -21,21 +21,23 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
         Dark
     };
 
-    enum AccentColors
+    struct BaseColors
     {
-        AccentLight3,
-        AccentLight2,
-        AccentLight1,
-        AccentBase,
-        AccentDark1,
-        AccentDark2,
-        AccentDark3,
-
-        NumAccentColors
+        QRgb primary;
+        QRgb secondary;
+        QRgb tertiary;
     };
 
-    QskFluent2Theme( Theme );
-    QskFluent2Theme( Theme, const std::array< QRgb, NumAccentColors >& );
+    struct AccentColors
+    {
+        QRgb primary;
+        QRgb secondary;
+        QRgb tertiary;
+        QRgb quaternary;
+    };
+
+    QskFluent2Theme( Theme, const BaseColors& baseColors,
+        const AccentColors& accentColors );
 
     typedef std::array< QRgb, 2 > BorderGradient;
 
@@ -156,8 +158,7 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
         struct
         {
             QRgb defaultColor;
-            QRgb defaultSolid;
-        } card;
+        } tab;
 
         struct
         {
@@ -182,13 +183,6 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
         struct
         {
             QRgb defaultColor;
-            QRgb secondary;
-            QRgb tertiary;
-        } card;
-
-        struct
-        {
-            QRgb defaultColor;
         } overlay;
 
         struct
@@ -203,10 +197,9 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
 
         struct
         {
-            QRgb base;
+            QRgb primary;
             QRgb secondary;
             QRgb tertiary;
-            QRgb quaternary;
         } solid;
     };
 
@@ -226,8 +219,6 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
 
     struct
     {
-        ShadowSettings cardRest;
-        ShadowSettings cardHover;
         ShadowSettings flyout;
         ShadowSettings dialog;
     } shadow;

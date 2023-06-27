@@ -6,9 +6,17 @@
 #include "QskFluent2SkinFactory.h"
 #include "QskFluent2Skin.h"
 #include "QskFluent2Theme.h"
+#include "QskHctColor.h"
+#include "QskRgbValue.h"
+
+#define COLOR_THEMES
 
 static const QString nameLight = QStringLiteral( "Fluent2 Light" );
 static const QString nameDark = QStringLiteral( "Fluent2 Dark" );
+
+#ifdef COLOR_THEMES
+static const QString nameOrchid = QStringLiteral( "Fluent2 Orchid" );
+#endif
 
 namespace
 {
@@ -29,11 +37,59 @@ QskFluent2SkinFactory::~QskFluent2SkinFactory()
 
 QStringList QskFluent2SkinFactory::skinNames() const
 {
-    return { nameLight, nameDark };
+    QStringList names = { nameLight, nameDark };
+#ifdef COLOR_THEMES
+    names += nameOrchid;
+#endif
+    return names;
 }
 
 QskSkin* QskFluent2SkinFactory::createSkin( const QString& skinName )
 {
+#ifdef COLOR_THEMES
+    if ( QString::compare( skinName, nameOrchid, Qt::CaseInsensitive ) == 0 )
+    {
+        auto skin = new QskFluent2Skin();
+
+        {
+            QskFluent2Theme::AccentColors accentColors;
+            QskFluent2Theme::BaseColors baseColors;
+
+            auto hct = QskHctColor( QskRgb::LemonChiffon );
+            baseColors = { hct.toned( 70 ).rgb(),
+                hct.toned( 60 ).rgb(), hct.toned( 80 ).rgb() };
+
+            hct = QskHctColor( QskRgb::LightSkyBlue );
+            accentColors = { hct.rgb(), hct.toned( 20 ).rgb(),
+                hct.toned( 40 ).rgb(), hct.toned( 60 ).rgb() };
+
+            skin->addTheme( QskAspect::Body,
+                { QskFluent2Theme::Light, baseColors, accentColors }  );
+        }
+
+        {
+            QskFluent2Theme::AccentColors accentColors;
+            QskFluent2Theme::BaseColors baseColors;
+
+            auto hct = QskHctColor( QskRgb::LemonChiffon );
+            baseColors = { hct.toned( 30 ).rgb(),
+                hct.toned( 20 ).rgb(), hct.toned( 40 ).rgb() };
+
+            hct = QskHctColor( QskRgb::Khaki );
+            accentColors = { hct.rgb(), hct.toned( 70 ).rgb(),
+                hct.toned( 80 ).rgb(), hct.toned( 90 ).rgb() };
+
+            skin->addTheme( QskAspect::Header,
+                { QskFluent2Theme::Dark, baseColors, accentColors }  );
+
+            skin->addTheme( QskAspect::Footer,
+                { QskFluent2Theme::Dark, baseColors, accentColors }  );
+        }
+
+        return skin;
+    }
+#endif
+
     QskFluent2Theme::Theme theme;
 
     if ( QString::compare( skinName, nameLight, Qt::CaseInsensitive ) == 0 )

@@ -4,6 +4,11 @@
  *****************************************************************************/
 
 /*
+    Definitions ( here possible ) taken from 
+    https://www.figma.com/file/NAWMapFlXnoOb86Q2H5GKr/Windows-UI-(Community)
+ */
+
+/*
     TODO:
 
     - we have a lot of lines with 1 pixels. Unfortunately OpenGL does some sort
@@ -58,6 +63,7 @@
     about waht to do. For the moment we implement resolving at definition
     time as an option to be able to play with both solutions.
  */
+
 #include "QskFluent2Skin.h"
 #include "QskFluent2Theme.h"
 

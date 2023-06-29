@@ -10,6 +10,7 @@
 #include "button/ButtonPage.h"
 #include "selector/SelectorPage.h"
 #include "dialog/DialogPage.h"
+#include "listbox/ListBoxPage.h"
 
 #include <SkinnyShortcut.h>
 #include <SkinnyShapeProvider.h>
@@ -86,6 +87,7 @@ namespace
             : QskTabView( parent )
         {
             setAutoFitTabs( true );
+            //setTabBarEdge( Qt::LeftEdge );
         }
 
         void setPagesEnabled( bool on )
@@ -250,6 +252,7 @@ namespace
             tabView->addPage( "Progress\nBars", new ProgressBarPage() );
             tabView->addPage( "Selectors", new SelectorPage() );
             tabView->addPage( "Dialogs", new DialogPage() );
+            tabView->addPage( "ListBox", new ListBoxPage() );
 
             connect( header, &Header::enabledToggled,
                 tabView, &TabView::setPagesEnabled );

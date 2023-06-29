@@ -28,8 +28,14 @@
 
     - missing ( dummy implementation only ):
 
-        - QskListView
         - QskScrollView
+
+          The extended mode of the scrollbar needs to be implemented
+
+        - QskListView
+
+          - hover state is not implemented
+          - indicator ( instead of selection colors ) is not supported
 
     - using qskDpToPixels
  */
@@ -591,10 +597,30 @@ void Editor::setupFocusIndicator( const QskFluent2Theme& theme )
 
 void Editor::setupListViewMetrics()
 {
+    using Q = QskListView;
+
+    setBoxBorderMetrics( Q::Cell | Q::Selected, { 3, 0, 0, 0 } );
 }
 
-void Editor::setupListViewColors( QskAspect::Section, const QskFluent2Theme& )
+void Editor::setupListViewColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
 {
+    using Q = QskListView;
+
+    const auto& pal = theme.palette;
+
+    const auto cell = Q::Cell | section;
+
+    setGradient( cell, pal.fillColor.controlAlt.secondary );
+    setGradient( cell | Q::Selected, pal.fillColor.subtle.secondary );
+
+    const auto c1 = pal.fillColor.subtle.secondary;
+    const auto c2 = pal.fillColor.accent.defaultColor;
+
+    setBoxBorderColors( cell | Q::Selected, 
+        QskGradient( { { 0.25, c1 }, { 0.25, c2 }, { 0.75, c2 }, { 0.75, c1 } } ) );
+
+    setColor( Q::Text, pal.fillColor.text.primary );
 }
 
 void Editor::setupMenuMetrics()
@@ -982,10 +1008,33 @@ void Editor::setupRadioBoxColors(
 
 void Editor::setupScrollViewMetrics()
 {
+    using A = QskAspect;
+    using Q = QskScrollView;
+
+    for ( auto subControl : { Q::HorizontalScrollBar, Q::VerticalScrollBar } )
+        setMetric( subControl | A::Size, 2 );
+
+    const auto handleExtent = 40.0;
+    setStrutSize( Q::HorizontalScrollHandle, handleExtent, 0.0 );
+    setStrutSize( Q::VerticalScrollHandle, 0.0, handleExtent );
 }
 
-void Editor::setupScrollViewColors( QskAspect::Section, const QskFluent2Theme& )
+void Editor::setupScrollViewColors(
+    QskAspect::Section section, const QskFluent2Theme& theme )
 {
+    using Q = QskScrollView;
+
+    const auto& pal = theme.palette;
+
+#if 1
+    setGradient( Q::Panel, QColor() );
+    setGradient( Q::Viewport, QColor() );
+#endif
+
+    for ( auto subControl : { Q::HorizontalScrollHandle, Q::VerticalScrollHandle } )
+    {
+        setGradient( subControl | section, pal.fillColor.controlStrong.defaultColor );
+    }
 }
 
 void Editor::setupSegmentedBarMetrics()

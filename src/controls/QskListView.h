@@ -34,7 +34,7 @@ class QSK_EXPORT QskListView : public QskScrollView
 
   public:
     QSK_SUBCONTROLS( Cell, Text )
-    QSK_STATES( Pressed, Selected )
+    QSK_STATES( Selected )
 
     enum SelectionMode
     {

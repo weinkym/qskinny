@@ -258,7 +258,6 @@ QRectF QskScrollViewSkinlet::scrollHandleRect( const QskScrollView* scrollView,
         const qreal y1 = pos.y() / scrollableSize.height();
         const qreal y2 = ( pos.y() + vRect.height() ) / scrollableSize.height();
 
-
         qreal top, bottom;
         qskAlignedHandle( y1, y2, sbRect.height(), strut.height(), top, bottom );
 

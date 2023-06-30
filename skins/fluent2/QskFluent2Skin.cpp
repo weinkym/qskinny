@@ -606,21 +606,75 @@ void Editor::setupListViewColors(
     QskAspect::Section section, const QskFluent2Theme& theme )
 {
     using Q = QskListView;
+    using A = QskAspect;
 
     const auto& pal = theme.palette;
 
-    const auto cell = Q::Cell | section;
+    for ( const auto state1 : { A::NoState, Q::Hovered, Q::Pressed, Q::Disabled } )
+    {
+        QRgb textColor, indicatorColor;
 
-    setGradient( cell, pal.fillColor.controlAlt.secondary );
-    setGradient( cell | Q::Selected, pal.fillColor.subtle.secondary );
+        if ( state1 == Q::Disabled )
+        {
+            textColor = pal.fillColor.text.disabled;
+            indicatorColor = pal.fillColor.accent.disabled;
+        }
+        if ( state1 == Q::Pressed )
+        {
+            textColor = pal.fillColor.text.secondary;
+            indicatorColor = pal.fillColor.accent.defaultColor;
+        }
+        else
+        {
+            textColor = pal.fillColor.text.primary;
+            indicatorColor = pal.fillColor.accent.defaultColor;
+        }
 
-    const auto c1 = pal.fillColor.subtle.secondary;
-    const auto c2 = pal.fillColor.accent.defaultColor;
+        for ( const auto state2 : { A::NoState, Q::Selected } )
+        {
+            QRgb cellColor;
 
-    setBoxBorderColors( cell | Q::Selected, 
-        QskGradient( { { 0.25, c1 }, { 0.25, c2 }, { 0.75, c2 }, { 0.75, c1 } } ) );
+            if ( state2 == A::NoState )
+            {
+                if ( state1 == Q::Hovered )
+                    cellColor = pal.fillColor.subtle.secondary;
+                else if ( state1 == Q::Pressed )
+                    cellColor = pal.fillColor.subtle.tertiary;
+                else
+                    cellColor = Qt::transparent;
+            }
+            else
+            {
+                if ( state1 == Q::Hovered )
+                    cellColor = pal.fillColor.subtle.tertiary;
+                else 
+                    cellColor = pal.fillColor.subtle.secondary;
+            }
 
-    setColor( Q::Text, pal.fillColor.text.primary );
+            const auto cell = Q::Cell | section | state1 | state2;
+            const auto text = Q::Text | section | state1 | state2;
+
+            setGradient( cell, cellColor );
+        
+            {
+                /*
+                    We are using a section of the left border to display a
+                    bar indicating the selection. Maybe we should introduce a
+                    subcontrol instead TODO ...
+                 */
+                const auto c1 = cellColor;
+                const auto c2 = indicatorColor;
+
+                const auto p1 = ( state1 == Q::Pressed ) ? 0.33 : 0.25;
+                const auto p2 = 1.0 - p1;
+
+                setBoxBorderColors( cell,
+                    QskGradient( { { p1, c1 }, { p1, c2 }, { p2, c2 }, { p2, c1 } } ) );
+            }
+
+            setColor( text, textColor );
+        }
+    }
 }
 
 void Editor::setupMenuMetrics()
@@ -660,6 +714,11 @@ void Editor::setupMenuColors(
 
     setGradient( Q::Segment | Q::Selected, pal.fillColor.subtle.secondary );
 
+    /*
+        We are using a section of the left border to display a
+        bar indicating the selection. Maybe we should introduce a
+        subcontrol instead TODO ...
+     */
     const auto c1 = pal.fillColor.subtle.secondary;
     const auto c2 = pal.fillColor.accent.defaultColor;
 

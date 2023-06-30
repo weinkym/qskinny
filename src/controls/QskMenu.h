@@ -38,7 +38,7 @@ class QSK_EXPORT QskMenu : public QskPopup
 
   public:
     QSK_SUBCONTROLS( Overlay, Panel, Segment, Cursor, Text, Icon, Separator )
-    QSK_STATES( Selected )
+    QSK_STATES( Pressed, Selected )
 
     QskMenu( QQuickItem* parentItem = nullptr );
     ~QskMenu() override;

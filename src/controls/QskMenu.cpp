@@ -26,7 +26,8 @@ QSK_SUBCONTROL( QskMenu, Text )
 QSK_SUBCONTROL( QskMenu, Icon )
 QSK_SUBCONTROL( QskMenu, Separator )
 
-QSK_SYSTEM_STATE( QskMenu, Selected, QskAspect::FirstSystemState << 2 )
+QSK_SYSTEM_STATE( QskMenu, Selected, QskAspect::LastUserState << 1 )
+QSK_SYSTEM_STATE( QskMenu, Pressed, QskAspect::LastUserState << 2 )
 
 static inline int qskActionIndex( const QVector< int >& actions, int index )
 {

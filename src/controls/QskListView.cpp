@@ -16,7 +16,8 @@
 QSK_SUBCONTROL( QskListView, Cell )
 QSK_SUBCONTROL( QskListView, Text )
 
-QSK_STATE( QskListView, Selected, QskAspect::FirstUserState )
+QSK_SYSTEM_STATE( QskListView, Selected, QskAspect::FirstSystemState << 2 )
+QSK_SYSTEM_STATE( QskListView, Pressed, QskAspect::FirstSystemState << 3 )
 
 class QskListView::PrivateData
 {

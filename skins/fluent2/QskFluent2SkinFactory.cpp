@@ -15,7 +15,7 @@ static const QString nameLight = QStringLiteral( "Fluent2 Light" );
 static const QString nameDark = QStringLiteral( "Fluent2 Dark" );
 
 #ifdef COLOR_THEMES
-static const QString nameOrchid = QStringLiteral( "Fluent2 Orchid" );
+static const QString nameColored = QStringLiteral( "Fluent2 Lemon" );
 #endif
 
 namespace
@@ -39,93 +39,100 @@ QStringList QskFluent2SkinFactory::skinNames() const
 {
     QStringList names = { nameLight, nameDark };
 #ifdef COLOR_THEMES
-    names += nameOrchid;
+    names += nameColored;
 #endif
     return names;
 }
 
 QskSkin* QskFluent2SkinFactory::createSkin( const QString& skinName )
 {
-#ifdef COLOR_THEMES
-    if ( QString::compare( skinName, nameOrchid, Qt::CaseInsensitive ) == 0 )
-    {
-        auto skin = new QskFluent2Skin();
-
-        {
-            QskFluent2Theme::AccentColors accentColors;
-            QskFluent2Theme::BaseColors baseColors;
-
-            auto hct = QskHctColor( QskRgb::LemonChiffon );
-            baseColors = { hct.toned( 70 ).rgb(),
-                hct.toned( 60 ).rgb(), hct.toned( 80 ).rgb() };
-
-            hct = QskHctColor( QskRgb::LightSkyBlue );
-            accentColors = { hct.rgb(), hct.toned( 20 ).rgb(),
-                hct.toned( 40 ).rgb(), hct.toned( 60 ).rgb() };
-
-            skin->addTheme( QskAspect::Body,
-                { QskFluent2Theme::Light, baseColors, accentColors }  );
-        }
-
-        {
-            QskFluent2Theme::AccentColors accentColors;
-            QskFluent2Theme::BaseColors baseColors;
-
-            auto hct = QskHctColor( QskRgb::LemonChiffon );
-            baseColors = { hct.toned( 30 ).rgb(),
-                hct.toned( 20 ).rgb(), hct.toned( 40 ).rgb() };
-
-            hct = QskHctColor( QskRgb::Khaki );
-            accentColors = { hct.rgb(), hct.toned( 70 ).rgb(),
-                hct.toned( 80 ).rgb(), hct.toned( 90 ).rgb() };
-
-            skin->addTheme( QskAspect::Header,
-                { QskFluent2Theme::Dark, baseColors, accentColors }  );
-
-            skin->addTheme( QskAspect::Footer,
-                { QskFluent2Theme::Dark, baseColors, accentColors }  );
-        }
-
-        return skin;
-    }
-#endif
-
-    QskFluent2Theme::Theme theme;
+    QskSkin::ColorScheme colorScheme;
 
     if ( QString::compare( skinName, nameLight, Qt::CaseInsensitive ) == 0 )
     {
-        theme = QskFluent2Theme::Light;
+        colorScheme = QskSkin::Light;
     }
     else if ( QString::compare( skinName, nameDark, Qt::CaseInsensitive ) == 0 )
     {
-        theme = QskFluent2Theme::Dark;
+        colorScheme = QskSkin::Dark;
     }
+#ifdef COLOR_THEMES
+    else if ( QString::compare( skinName, nameColored, Qt::CaseInsensitive ) == 0 )
+    {
+        colorScheme = QskSkin::Unknown;
+    }
+#endif
     else
     {
         return nullptr;
     }
 
-    QskFluent2Theme::AccentColors accentColors;
-    QskFluent2Theme::BaseColors baseColors[2];
+    struct
+    {
+        QskSkin::ColorScheme scheme;
+        QskFluent2Theme::BaseColors baseColors;
+        QskFluent2Theme::AccentColors accentColors;
 
-    if ( theme == QskFluent2Theme::Light )
+        QskFluent2Theme theme() const { return { scheme, baseColors, accentColors }; }
+    } colors[2];
+
+    switch( colorScheme )
     {
-        accentColors = { 0xff0078d4, 0xff005eb7, 0xff003d92, 0xff001968 };
-        baseColors[0] = { rgbGray( 243 ), rgbGray( 249 ), rgbGray( 238 ) };
-        baseColors[1] = { rgbGray( 249 ), rgbGray( 249 ), rgbGray( 238 ) };
-    }
-    else
-    {
-        accentColors = { 0xff0078d4, 0xff0093f9, 0xff60ccfe, 0xff98ecfe };
-        baseColors[0] = { rgbGray( 32 ), rgbGray( 40 ), rgbGray( 28 ) };
-        baseColors[1] = { rgbGray( 40 ), rgbGray( 44 ), rgbGray( 28 ) };
+        case QskSkin::Light:
+        {
+            colors[0].scheme = QskSkin::Light;
+            colors[0].baseColors = { rgbGray( 243 ), rgbGray( 249 ), rgbGray( 238 ) };
+            colors[0].accentColors = { 0xff0078d4, 0xff005eb7, 0xff003d92, 0xff001968 };
+
+            colors[1].scheme = QskSkin::Light;
+            colors[1].baseColors = { rgbGray( 249 ), rgbGray( 249 ), rgbGray( 238 ) };
+            colors[1].accentColors = colors[0].accentColors;
+
+            break;
+        }
+        case QskSkin::Dark:
+        {
+            colors[0].scheme = QskSkin::Dark;
+            colors[0].baseColors = { rgbGray( 32 ), rgbGray( 40 ), rgbGray( 28 ) };
+            colors[0].accentColors = { 0xff0078d4, 0xff0093f9, 0xff60ccfe, 0xff98ecfe };
+
+            colors[1].scheme = QskSkin::Dark;
+            colors[1].baseColors = { rgbGray( 40 ), rgbGray( 44 ), rgbGray( 28 ) };
+            colors[1].accentColors = colors[0].accentColors;
+
+            break;
+        }
+        default:
+        {
+            QskHctColor hct;
+
+            colors[0].scheme = QskSkin::Light;
+
+            hct = QskHctColor( QskRgb::LemonChiffon );
+            colors[0].baseColors = { hct.toned( 70 ).rgb(),
+                hct.toned( 60 ).rgb(), hct.toned( 80 ).rgb() };
+
+            hct = QskHctColor( QskRgb::LightSkyBlue );
+            colors[0].accentColors = { hct.rgb(), hct.toned( 20 ).rgb(),
+                hct.toned( 40 ).rgb(), hct.toned( 60 ).rgb() };
+
+            colors[1].scheme = QskSkin::Dark;
+
+            hct = QskHctColor( QskRgb::LemonChiffon );
+            colors[1].baseColors = { hct.toned( 30 ).rgb(),
+                hct.toned( 20 ).rgb(), hct.toned( 40 ).rgb() };
+
+            hct = QskHctColor( QskRgb::Khaki );
+            colors[1].accentColors = { hct.rgb(), hct.toned( 70 ).rgb(),
+                hct.toned( 80 ).rgb(), hct.toned( 90 ).rgb() };
+        }
     }
 
     auto skin = new QskFluent2Skin();
 
-    skin->addTheme( QskAspect::Body, { theme, baseColors[0], accentColors }  );
-    skin->addTheme( QskAspect::Header, { theme, baseColors[1], accentColors } );
-    skin->addTheme( QskAspect::Footer, { theme, baseColors[1], accentColors } );
+    skin->addTheme( QskAspect::Body, colors[0].theme() );
+    skin->addTheme( QskAspect::Header, colors[1].theme() );
+    skin->addTheme( QskAspect::Footer, colors[1].theme() );
 
     return skin;
 }

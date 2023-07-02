@@ -4,7 +4,7 @@
  *****************************************************************************/
 
 /*
-    Definitions ( here possible ) taken from 
+    Definitions ( where possible ) taken from 
     https://www.figma.com/file/NAWMapFlXnoOb86Q2H5GKr/Windows-UI-(Community)
  */
 

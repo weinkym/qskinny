@@ -8,19 +8,15 @@
 
 #include "QskFluent2Global.h"
 
+#include <QskSkin.h>
 #include <QskShadowMetrics.h>
+
 #include <qcolor.h>
 #include <array>
 
 class QSK_FLUENT2_EXPORT QskFluent2Theme
 {
   public:
-    enum Theme
-    {
-        Light,
-        Dark
-    };
-
     struct BaseColors
     {
         QRgb primary;
@@ -36,7 +32,7 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
         QRgb quaternary;
     };
 
-    QskFluent2Theme( Theme, const BaseColors& baseColors,
+    QskFluent2Theme( QskSkin::ColorScheme, const BaseColors& baseColors,
         const AccentColors& accentColors );
 
     typedef std::array< QRgb, 2 > BorderGradient;

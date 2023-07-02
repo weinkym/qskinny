@@ -1,4 +1,6 @@
 {
     "FactoryId": "Fluent2Factory",
-    "Skins": [ "Fluent2 Light", "Fluent2 Dark", "Fluent2 Orchid" ]
+    "Skins": [ { "Name": "Fluent2 Light", "Scheme": "Light" },
+               { "Name": "Fluent2 Lemon", "Scheme": "Unknown" },
+               { "Name": "Fluent2 Dark", "Scheme": "Dark" } ]
 }

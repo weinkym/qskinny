@@ -14,7 +14,7 @@ namespace
     }
 }
 
-QskFluent2Theme::QskFluent2Theme( Theme theme,
+QskFluent2Theme::QskFluent2Theme( QskSkin::ColorScheme colorScheme,
     const BaseColors& baseColors, const AccentColors& accentColors )
 {
     using namespace QskRgb;
@@ -27,7 +27,7 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
         colors.solid.tertiary = baseColors.tertiary;
     }
 
-    if( theme == Light )
+    if( colorScheme != QskSkin::Dark )
     {
         {
             auto& colors = palette.fillColor;
@@ -145,7 +145,7 @@ QskFluent2Theme::QskFluent2Theme( Theme theme,
         // ### should actually be drawn twice with different values:
         shadow.dialog = { QskShadowMetrics( 0, 21, QPointF( 0, 2 ) ), rgbGray( 0, 0.1474 ) };
     }
-    else if( theme == Dark )
+    else
     {
         {
             auto& colors = palette.fillColor;

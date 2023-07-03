@@ -26,18 +26,16 @@
 
         - QskPageIndicator
 
-    - missing ( dummy implementation only ):
+    - QskScrollView
 
-        - QskScrollView
+      The extended mode of the scrollbar needs to be implemented
 
-          The extended mode of the scrollbar needs to be implemented
+    - QskListView
 
-        - QskListView
+      - hover state is not implemented
+      - Indicator subcontrol might be better than using the border of the selection box
 
-          - hover state is not implemented
-          - indicator ( instead of selection colors ) is not supported
-
-    - using qskDpToPixels
+    - using qskDpToPixels ?
  */
 
 /*

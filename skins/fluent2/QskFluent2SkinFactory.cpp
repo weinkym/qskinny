@@ -50,16 +50,16 @@ QskSkin* QskFluent2SkinFactory::createSkin( const QString& skinName )
 
     if ( QString::compare( skinName, nameLight, Qt::CaseInsensitive ) == 0 )
     {
-        colorScheme = QskSkin::Light;
+        colorScheme = QskSkin::LightScheme;
     }
     else if ( QString::compare( skinName, nameDark, Qt::CaseInsensitive ) == 0 )
     {
-        colorScheme = QskSkin::Dark;
+        colorScheme = QskSkin::DarkScheme;
     }
 #ifdef COLOR_THEMES
     else if ( QString::compare( skinName, nameColored, Qt::CaseInsensitive ) == 0 )
     {
-        colorScheme = QskSkin::Unknown;
+        colorScheme = QskSkin::UnknownScheme;
     }
 #endif
     else
@@ -78,25 +78,25 @@ QskSkin* QskFluent2SkinFactory::createSkin( const QString& skinName )
 
     switch( colorScheme )
     {
-        case QskSkin::Light:
+        case QskSkin::LightScheme:
         {
-            colors[0].scheme = QskSkin::Light;
+            colors[0].scheme = colorScheme;
             colors[0].baseColors = { rgbGray( 243 ), rgbGray( 249 ), rgbGray( 238 ) };
             colors[0].accentColors = { 0xff0078d4, 0xff005eb7, 0xff003d92, 0xff001968 };
 
-            colors[1].scheme = QskSkin::Light;
+            colors[1].scheme = colorScheme;
             colors[1].baseColors = { rgbGray( 249 ), rgbGray( 249 ), rgbGray( 238 ) };
             colors[1].accentColors = colors[0].accentColors;
 
             break;
         }
-        case QskSkin::Dark:
+        case QskSkin::DarkScheme:
         {
-            colors[0].scheme = QskSkin::Dark;
+            colors[0].scheme = colorScheme;
             colors[0].baseColors = { rgbGray( 32 ), rgbGray( 40 ), rgbGray( 28 ) };
             colors[0].accentColors = { 0xff0078d4, 0xff0093f9, 0xff60ccfe, 0xff98ecfe };
 
-            colors[1].scheme = QskSkin::Dark;
+            colors[1].scheme = colorScheme;
             colors[1].baseColors = { rgbGray( 40 ), rgbGray( 44 ), rgbGray( 28 ) };
             colors[1].accentColors = colors[0].accentColors;
 
@@ -106,7 +106,7 @@ QskSkin* QskFluent2SkinFactory::createSkin( const QString& skinName )
         {
             QskHctColor hct;
 
-            colors[0].scheme = QskSkin::Light;
+            colors[0].scheme = QskSkin::LightScheme;
 
             hct = QskHctColor( QskRgb::LemonChiffon );
             colors[0].baseColors = { hct.toned( 70 ).rgb(),
@@ -116,7 +116,7 @@ QskSkin* QskFluent2SkinFactory::createSkin( const QString& skinName )
             colors[0].accentColors = { hct.rgb(), hct.toned( 20 ).rgb(),
                 hct.toned( 40 ).rgb(), hct.toned( 60 ).rgb() };
 
-            colors[1].scheme = QskSkin::Dark;
+            colors[1].scheme = QskSkin::DarkScheme;
 
             hct = QskHctColor( QskRgb::LemonChiffon );
             colors[1].baseColors = { hct.toned( 30 ).rgb(),

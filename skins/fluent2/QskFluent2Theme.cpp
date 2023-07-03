@@ -27,7 +27,7 @@ QskFluent2Theme::QskFluent2Theme( QskSkin::ColorScheme colorScheme,
         colors.solid.tertiary = baseColors.tertiary;
     }
 
-    if( colorScheme != QskSkin::Dark )
+    if( colorScheme != QskSkin::DarkScheme )
     {
         {
             auto& colors = palette.fillColor;

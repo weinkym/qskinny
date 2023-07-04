@@ -22,13 +22,17 @@ QskFluent2Theme::QskFluent2Theme( QskSkin::ColorScheme colorScheme,
     {
         auto& colors = palette.background;
 
-        colors.solid.primary = baseColors.primary;
+        colors.solid.base = baseColors.primary;
         colors.solid.secondary = baseColors.secondary;
         colors.solid.tertiary = baseColors.tertiary;
     }
 
     if( colorScheme != QskSkin::DarkScheme )
     {
+        {
+            palette.background.solid.quaternary = rgbGray( 255 );
+        }
+
         {
             auto& colors = palette.fillColor;
 
@@ -119,7 +123,8 @@ QskFluent2Theme::QskFluent2Theme( QskSkin::ColorScheme colorScheme,
             colors.controlStrong.defaultColor = rgbGray( 0, 0.4458 );
             colors.controlStrong.disabled = rgbGray( 0, 0.2169 );
 
-            colors.tab.defaultColor = rgbGray( 0, 0.0578 );
+            colors.card.defaultColor = rgbGray( 0, 0.0578 );
+            colors.card.defaultSolid = rgbGray( 235 );
 
             colors.divider.defaultColor = rgbGray( 0, 0.0803 );
 
@@ -147,6 +152,9 @@ QskFluent2Theme::QskFluent2Theme( QskSkin::ColorScheme colorScheme,
     }
     else
     {
+        {
+            palette.background.solid.quaternary = rgbGray( 44 );
+        }
         {
             auto& colors = palette.fillColor;
 
@@ -237,7 +245,8 @@ QskFluent2Theme::QskFluent2Theme( QskSkin::ColorScheme colorScheme,
             colors.controlStrong.defaultColor = rgbGray( 255, 0.5442 );
             colors.controlStrong.disabled = rgbGray( 255, 0.1581 );
 
-            colors.tab.defaultColor = rgbGray( 255, 0.0578 );
+            colors.card.defaultColor = rgbGray( 255, 0.0578 );
+            colors.card.defaultSolid = rgbGray( 235 );
 
             colors.divider.defaultColor = rgbGray( 255, 0.0837 );
 

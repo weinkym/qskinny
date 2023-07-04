@@ -355,7 +355,7 @@ void Editor::setupBoxColors(
     QskAspect::Section section, const QskFluent2Theme& theme )
 {
     setGradient( QskBox::Panel | section,
-        theme.palette.background.solid.primary );
+        theme.palette.background.solid.base );
 }
 
 void Editor::setupCheckBoxMetrics()
@@ -461,7 +461,7 @@ void Editor::setupCheckBoxColors(
                         fillColor = QskRgb::DarkRed;
                 }
 #endif
-                fillColor = rgbSolid( fillColor, pal.background.solid.primary );
+                fillColor = rgbSolid( fillColor, pal.background.solid.base );
                 setGradient( box, fillColor );
 
                 borderColor = rgbSolid( borderColor, fillColor );
@@ -552,7 +552,7 @@ void Editor::setupComboBoxColors(
         const auto icon = Q::Icon | section | state;
         const auto indicator = Q::StatusIndicator | section | state;
 
-        panelColor = rgbSolid( panelColor, pal.background.solid.primary );
+        panelColor = rgbSolid( panelColor, pal.background.solid.base );
 
         setGradient( panel, panelColor );
         setBoxBorderGradient( panel, borderColor1, borderColor2, panelColor );
@@ -581,7 +581,7 @@ void Editor::setupDialogButtonBoxColors(
     QskAspect::Section section, const QskFluent2Theme& theme )
 {
     setGradient( QskDialogButtonBox::Panel | section,
-        theme.palette.background.solid.primary );
+        theme.palette.background.solid.base );
 }
 
 void Editor::setupFocusIndicatorMetrics()
@@ -934,7 +934,7 @@ void Editor::setupPushButtonColors(
                 }
             }
 
-            panelColor = rgbSolid( panelColor, pal.background.solid.primary );
+            panelColor = rgbSolid( panelColor, pal.background.solid.base );
 
             setGradient( panel | state, panelColor );
 
@@ -1134,7 +1134,7 @@ void Editor::setupSegmentedBarColors(
     const auto& pal = theme.palette;
 
     auto panelColor = pal.fillColor.control.defaultColor;
-    panelColor = rgbSolid( panelColor, pal.background.solid.primary );
+    panelColor = rgbSolid( panelColor, pal.background.solid.base );
 
     setGradient( Q::Panel, panelColor );
 
@@ -1194,7 +1194,7 @@ void Editor::setupSegmentedBarColors(
             const auto text = Q::Text | section | states;
             const auto icon = Q::Icon | section | states;
 
-            segmentColor = rgbSolid( segmentColor, pal.background.solid.primary );
+            segmentColor = rgbSolid( segmentColor, pal.background.solid.base );
 
             setGradient( segment, segmentColor );
             setBoxBorderGradient( segment, borderColor1, borderColor2, panelColor );
@@ -1294,7 +1294,7 @@ void Editor::setupSliderColors(
             rippleColor = grooveColor;
         }
 
-        grooveColor = rgbSolid( grooveColor, pal.background.solid.primary );
+        grooveColor = rgbSolid( grooveColor, pal.background.solid.base );
 
         setGradient( Q::Groove | section | state, grooveColor );
         setGradient( Q::Fill | section | state, fillColor );
@@ -1387,7 +1387,7 @@ void Editor::setupSpinBoxColors(
         const auto upIndicator = Q::UpIndicator | section | state;
         const auto downIndicator = Q::DownIndicator | section | state;
 
-        panelColor = rgbSolid( panelColor, pal.background.solid.primary );
+        panelColor = rgbSolid( panelColor, pal.background.solid.base );
 
         setGradient( panel, panelColor );
         setBoxBorderGradient( panel, borderColor1, borderColor2, panelColor );
@@ -1405,7 +1405,7 @@ void Editor::setupTabBarMetrics()
 
 void Editor::setupTabBarColors( QskAspect::Section section, const QskFluent2Theme& theme )
 {
-    setGradient( QskTabBar::Panel | section, theme.palette.background.solid.primary );
+    setGradient( QskTabBar::Panel | section, theme.palette.background.solid.base );
 }
 
 void Editor::setupTabButtonMetrics()
@@ -1465,11 +1465,11 @@ void Editor::setupTabButtonColors(
         const auto panel = Q::Panel | section | state;
         const auto text = Q::Text | section | state;
 
-        panelColor = rgbSolid( panelColor, pal.background.solid.primary );
+        panelColor = rgbSolid( panelColor, pal.background.solid.base );
         setGradient( panel, panelColor );
 
         const auto borderColor = rgbSolid(
-            pal.strokeColor.tab.defaultColor, pal.background.solid.primary );
+            pal.strokeColor.card.defaultColor, pal.background.solid.base );
 
         setBoxBorderColors( panel, borderColor );
 
@@ -1596,7 +1596,7 @@ void Editor::setupTextInputColors(
         const auto panel = Q::Panel | section | state;
         const auto text = Q::Text | section | state;
 
-        panelColor = rgbSolid( panelColor, pal.background.solid.primary );
+        panelColor = rgbSolid( panelColor, pal.background.solid.base );
 
         setGradient( panel, panelColor );
         setBoxBorderGradient( panel, borderColor1, borderColor2, panelColor );
@@ -1715,7 +1715,7 @@ void Editor::setupSwitchButtonColors(
             const auto groove = Q::Groove | section | states;
             const auto handle = Q::Handle | section | states;
 
-            grooveColor = rgbSolid( grooveColor, pal.background.solid.primary );
+            grooveColor = rgbSolid( grooveColor, pal.background.solid.base );
 
             setGradient( groove, grooveColor );
             setBoxBorderColors( groove, grooveBorderColor );

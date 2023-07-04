@@ -154,7 +154,8 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
         struct
         {
             QRgb defaultColor;
-        } tab;
+            QRgb defaultSolid;
+        } card;
 
         struct
         {
@@ -193,9 +194,10 @@ class QSK_FLUENT2_EXPORT QskFluent2Theme
 
         struct
         {
-            QRgb primary;
+            QRgb base;
             QRgb secondary;
             QRgb tertiary;
+            QRgb quaternary;
         } solid;
     };
 

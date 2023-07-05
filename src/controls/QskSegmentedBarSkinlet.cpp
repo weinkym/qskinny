@@ -10,8 +10,9 @@
 #include "QskGraphic.h"
 #include "QskColorFilter.h"
 #include "QskFunctions.h"
+#include "QskSGNode.h"
 #include "QskSkin.h"
-#include "QskStandardSymbol.h"
+#include "QskSkinStateChanger.h"
 #include "QskSubcontrolLayoutEngine.h"
 
 #include <qfontmetrics.h>
@@ -66,8 +67,8 @@ namespace
 QskSegmentedBarSkinlet::QskSegmentedBarSkinlet( QskSkin* skin )
     : Inherited( skin )
 {
-    setNodeRoles( { PanelRole, SegmentRole,
-        SeparatorRole, CursorRole, TextRole, IconRole  } );
+    setNodeRoles( { PanelRole, SegmentRole, SeparatorRole,
+        CursorRole, SplashRole, TextRole, IconRole  } );
 }
 
 QskSegmentedBarSkinlet::~QskSegmentedBarSkinlet() = default;
@@ -85,6 +86,9 @@ QRectF QskSegmentedBarSkinlet::subControlRect(
 
     if( subControl == Q::Cursor )
         return cursorRect( bar, contentsRect );
+
+    if( subControl == Q::Splash )
+        return splashRect( bar, contentsRect );
 
     return Inherited::subControlRect( skinnable, contentsRect, subControl );
 }
@@ -118,6 +122,48 @@ QRectF QskSegmentedBarSkinlet::cursorRect(
     }
 
     return cursorRect;
+}
+
+QRectF QskSegmentedBarSkinlet::splashRect(
+    const QskSegmentedBar* bar, const QRectF& contentsRect ) const
+{
+    using Q = QskSegmentedBar;
+
+    QRectF rect;
+
+    const auto ratio = bar->metric( Q::Splash | QskAspect::Size );
+
+    if ( ratio > 0.0 )
+    {
+        const auto pos = bar->effectiveSkinHint(
+            Q::Splash | QskAspect::Metric | QskAspect::Position ).toPointF();
+
+        const int index = bar->indexAtPosition( pos );
+
+        if( index >= 0 && index < bar->count() )
+        {
+            const auto sr = segmentRect( bar, contentsRect, index );
+            rect = sr;
+            qreal w, h;
+
+            if( bar->orientation() == Qt::Horizontal )
+            {
+                w = 2.0 * rect.width() * ratio;
+                h = 2.0 * rect.height();
+            }
+            else
+            {
+                w = 2.0 * rect.width();
+                h = 2.0 * rect.height() * ratio;
+            }
+
+            rect.setSize( { w, h } );
+            rect.moveCenter( pos );
+            rect = rect.intersected( sr );
+        }
+    }
+
+    return rect;
 }
 
 QRectF QskSegmentedBarSkinlet::segmentRect(
@@ -163,7 +209,7 @@ QRectF QskSegmentedBarSkinlet::separatorRect(
 
     if( bar->orientation() == Qt::Horizontal )
     {
-        rect.setLeft( rect.right() ); // ### *0.5 or so?
+        rect.setLeft( rect.right() );
         rect.setSize( { strutSize.width(), sh.height() } );
     }
     else
@@ -183,10 +229,15 @@ QSGNode* QskSegmentedBarSkinlet::updateSubNode(
 {
     using Q = QskSegmentedBar;
 
+    const auto bar = static_cast< const QskSegmentedBar* >( skinnable );
+
     switch( nodeRole )
     {
         case CursorRole:
             return updateBoxNode( skinnable, node, Q::Cursor );
+
+        case SplashRole:
+            return updateSplashNode( bar, node );
 
         case PanelRole:
             return updateBoxNode( skinnable, node, Q::Panel );
@@ -317,13 +368,70 @@ QskAspect::States QskSegmentedBarSkinlet::sampleStates(
     const QskSkinnable* skinnable, QskAspect::Subcontrol subControl, int index ) const
 {
     using Q = QskSegmentedBar;
+    using A = QskAspect;
 
     auto states = Inherited::sampleStates( skinnable, subControl, index );
 
-    if ( subControl == Q::Segment || subControl == Q::Icon || subControl == Q::Text )
-    {
-        const auto bar = static_cast< const QskSegmentedBar* >( skinnable );
+    const auto* bar = static_cast< const QskSegmentedBar* >( skinnable );
 
+    if ( subControl == Q::Segment || subControl == Q::Cursor )
+    {
+        if ( bar->isSegmentEnabled( index ) )
+        {
+            if ( bar->selectedIndex() == index )
+                states |= Q::Selected;
+        }
+        else
+        {
+            states |= Q::Disabled;
+        }
+
+        const auto cursorPos = bar->effectiveSkinHint( Q::Segment | Q::Hovered | A::Metric | A::Position ).toPointF();
+
+        if( !cursorPos.isNull() && bar->indexAtPosition( cursorPos ) == index )
+        {
+            states |= Q::Hovered;
+        }
+        else
+        {
+            states &= ~Q::Hovered;
+        }
+
+        const auto focusIndex = bar->positionHint( Q::Segment | Q::Focused );
+
+        if( focusIndex >= 0 && focusIndex < bar->count() )
+        {
+            if( focusIndex == index )
+            {
+                states |= Q::Focused;
+            }
+            else
+            {
+                states &= ~Q::Focused;
+            }
+        }
+
+        if( bar->count() > 0 )
+        {
+            if( index == 0 )
+            {
+                states &= ~Q::Maximum;
+                states |= Q::Minimum;
+            }
+            else if( index == bar->count() - 1 )
+            {
+                states &= ~Q::Minimum;
+                states |= Q::Maximum;
+            }
+            else
+            {
+                states &= ~Q::Minimum;
+                states &= ~Q::Maximum;
+            }
+        }
+    }
+    else if( subControl == Q::Icon || subControl == Q::Text )
+    {
         if ( bar->isSegmentEnabled( index ) )
         {
             if ( bar->selectedIndex() == index )
@@ -347,7 +455,7 @@ QSGNode* QskSegmentedBarSkinlet::updateSampleNode( const QskSkinnable* skinnable
 
     const auto rect = sampleRect( bar, bar->contentsRect(), subControl, index );
 
-    if ( subControl == Q::Segment || subControl == Q::Separator )
+    if ( subControl == Q::Segment || subControl == Q::Separator || subControl == Q::Cursor )
     {
         return updateBoxNode( skinnable, node, rect, subControl );
     }
@@ -385,6 +493,39 @@ QSGNode* QskSegmentedBarSkinlet::updateSampleNode( const QskSkinnable* skinnable
     }
 
     return Inherited::updateSampleNode( skinnable, subControl, index, node );
+}
+
+QSGNode* QskSegmentedBarSkinlet::updateSplashNode(
+    const QskSegmentedBar* bar, QSGNode* node ) const
+{
+    using Q = QskSegmentedBar;
+
+    // get Minimum / Maximum right:
+    QskSkinStateChanger stateChanger( bar );
+    const auto states = sampleStates( bar, Q::Segment, bar->selectedIndex() );
+    stateChanger.setStates( states );
+
+    const auto splashRect = bar->subControlRect( Q::Splash );
+    if ( splashRect.isEmpty() )
+        return nullptr;
+
+    auto clipNode = updateBoxClipNode( bar, node,
+        bar->subControlRect( Q::Cursor ), Q::Cursor );
+
+    if ( clipNode )
+    {
+        auto boxNode = QskSGNode::findChildNode( clipNode, SplashRole );
+        boxNode = updateBoxNode( bar, boxNode, splashRect, Q::Splash );
+
+        if ( boxNode == nullptr )
+            return nullptr;
+
+        QskSGNode::setNodeRole( boxNode, SplashRole );
+        if ( boxNode->parent() != clipNode )
+            clipNode->appendChildNode( boxNode );
+    }
+
+    return clipNode;
 }
 
 #include "moc_QskSegmentedBarSkinlet.cpp"

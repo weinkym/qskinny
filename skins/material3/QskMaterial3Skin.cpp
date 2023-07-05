@@ -278,6 +278,10 @@ void Editor::setupComboBox()
         m_pal.surfaceVariant, m_pal.focusOpacity );
     setGradient( Q::Panel | Q::Focused, focusColor );
 
+    const auto pressedColor = flattenedColor( m_pal.onSurfaceVariant,
+        m_pal.surfaceVariant, m_pal.pressedOpacity );
+    setGradient( Q::Panel | Q::Pressed, pressedColor );
+
     const auto activeColor = flattenedColor( m_pal.onSurfaceVariant,
         m_pal.surfaceVariant, m_pal.pressedOpacity );
     setGradient( Q::Panel | Q::PopupOpen, activeColor );
@@ -340,8 +344,8 @@ void Editor::setupMenu()
 
     // The color here is primary with an opacity of 8% - we blend that
     // with the background, because we don't want the menu to have transparency:
-    const auto panel = flattenedColor( m_pal.primary, m_pal.background, 0.08 );
-    setGradient( Q::Panel, panel );
+    const auto panelColor = flattenedColor( m_pal.primary, m_pal.background, 0.08 );
+    setGradient( Q::Panel, panelColor );
 
     setShadowMetrics( Q::Panel, m_pal.elevation2 );
     setShadowColor( Q::Panel, m_pal.shadow );
@@ -355,7 +359,14 @@ void Editor::setupMenu()
     setSpacing( Q::Segment, 5_dp );
     setGradient( Q::Segment, Qt::transparent );
 
-    setGradient( Q::Cursor, m_pal.primary12 );
+    const auto hoverColor = flattenedColor( m_pal.onSurface, panelColor, m_pal.hoverOpacity );
+    setGradient( Q::Segment | Q::Hovered, hoverColor );
+
+    setGradient( Q::Segment | Q::Selected, m_pal.primary12 );
+    const auto hoverSelectedColor = flattenedColor( m_pal.onSurface, m_pal.primary12, m_pal.hoverOpacity );
+    setGradient( Q::Segment | Q::Selected | Q::Hovered, hoverSelectedColor );
+    const auto pressedSelectedColor = flattenedColor( m_pal.onSurface, m_pal.primary12, m_pal.pressedOpacity );
+    setGradient( Q::Segment | Q::Pressed | Q::Selected, pressedSelectedColor );
 
     setPadding( Q::Icon, 7_dp );
     setStrutSize( Q::Icon, 24_dp, 24_dp );
@@ -489,7 +500,6 @@ void Editor::setupFocusIndicator()
 
 void Editor::setupSegmentedBar()
 {
-    // copied from Squiek: we need something similar to a tab bar here. TODO ...
     using A = QskAspect;
     using Q = QskSegmentedBar;
 
@@ -507,6 +517,7 @@ void Editor::setupSegmentedBar()
 
         setBoxBorderMetrics( Q::Panel, 1_dp );
         setBoxBorderColors( Q::Panel, m_pal.outline );
+
         setBoxBorderColors( Q::Panel | Q::Disabled, m_pal.onSurface12 );
 
         setStrutSize( Q::Panel | A::Horizontal, panelStrutSize );
@@ -514,13 +525,58 @@ void Editor::setupSegmentedBar()
     }
 
     {
-        // Segment
+        // Segment / Splash
 
         setStrutSize( Q::Segment | A::Horizontal, segmentStrutSize );
         setStrutSize( Q::Segment | A::Vertical, segmentStrutSize.transposed() );
-        setGradient( Q::Segment, Qt::transparent );
+
+        setBoxBorderMetrics( Q::Segment | A::Horizontal, { 0, 1_dp, 0, 1_dp } );
+        setBoxBorderMetrics( Q::Segment | Q::Minimum | A::Horizontal, { 1_dp, 1_dp, 0, 1_dp } );
+        setBoxBorderMetrics( Q::Segment | Q::Maximum | A::Horizontal, { 0, 1_dp, 1_dp, 1_dp } );
+
+        setBoxBorderMetrics( Q::Segment | A::Vertical, { 1_dp, 0,  1_dp, 0 } );
+        setBoxBorderMetrics( Q::Segment | Q::Minimum | A::Vertical, { 1_dp, 1_dp, 1_dp, 0 } );
+        setBoxBorderMetrics( Q::Segment | Q::Maximum | A::Vertical, { 1_dp, 0, 1_dp, 1_dp } );
+
+        setBoxBorderColors( Q::Segment, Qt::transparent );
+
+        setGradient( Q::Segment | Q::Hovered, m_pal.onSurface8,
+                     { QskStateCombination::CombinationNoState, Q::Minimum | Q::Maximum } );
+
+        setGradient( Q::Segment | Q::Focused, m_pal.onSurface12,
+                     { QskStateCombination::CombinationNoState, Q::Minimum | Q::Maximum } );
+
+        setGradient( Q::Segment | Q::Selected, m_pal.secondaryContainer,
+                    { QskStateCombination::CombinationNoState, Q::Minimum | Q::Maximum } );
+        setGradient( Q::Segment | Q::Selected | Q::Hovered,
+                    flattenedColor( m_pal.onSurface, m_pal.secondaryContainer, m_pal.hoverOpacity ),
+                                    { QskStateCombination::CombinationNoState, Q::Minimum | Q::Maximum } );
+        setGradient( Q::Segment | Q::Selected | Q::Focused,
+                    flattenedColor( m_pal.onSurface, m_pal.secondaryContainer, m_pal.focusOpacity ),
+                                    { QskStateCombination::CombinationNoState, Q::Minimum | Q::Maximum } );
+
+        setGradient( Q::Segment | Q::Selected | Q::Disabled, m_pal.onSurface12,
+                     { QskStateCombination::CombinationNoState, Q::Minimum | Q::Maximum } );
+
         setPadding( Q::Segment | A::Horizontal, 12_dp, 0, 12_dp, 0 );
         setPadding( Q::Segment | A::Vertical, 0, 12_dp, 0, 12_dp );
+
+        for( const auto subcontrol : { Q::Segment, Q::Splash } )
+        {
+            setBoxShape( subcontrol | Q::Minimum | A::Horizontal,
+                         { 100, 0, 100, 0, Qt::RelativeSize },
+                         { QskStateCombination::CombinationNoState, Q::Disabled } );
+            setBoxShape( subcontrol | Q::Maximum | A::Horizontal,
+                         { 0, 100, 0, 100, Qt::RelativeSize },
+                         { QskStateCombination::CombinationNoState, Q::Disabled } );
+
+            setBoxShape( subcontrol | Q::Minimum | A::Vertical,
+                         { 100, 100, 0, 0, Qt::RelativeSize },
+                         { QskStateCombination::CombinationNoState, Q::Disabled } );
+            setBoxShape( subcontrol | Q::Maximum | A::Vertical,
+                         { 0, 0, 100, 100, Qt::RelativeSize },
+                         { QskStateCombination::CombinationNoState, Q::Disabled } );
+        }
     }
 
     {
@@ -534,30 +590,10 @@ void Editor::setupSegmentedBar()
     }
 
     {
-        // Cursor
-        setBoxShape( Q::Cursor, 0 );
+        // Splash
 
-        setBoxShape( Q::Cursor | Q::Minimum | A::Horizontal,
-            { 100, 0, 100, 0, Qt::RelativeSize },
-            { QskStateCombination::CombinationNoState, Q::Disabled } );
-
-        setBoxShape( Q::Cursor | Q::Maximum | A::Horizontal,
-            { 0, 100, 0, 100, Qt::RelativeSize },
-            { QskStateCombination::CombinationNoState, Q::Disabled } );
-
-        setBoxShape( Q::Cursor | Q::Minimum | A::Vertical,
-            { 100, 100, 0, 0, Qt::RelativeSize },
-            { QskStateCombination::CombinationNoState, Q::Disabled } );
-
-        setBoxShape( Q::Cursor | Q::Maximum | A::Vertical,
-            { 0, 0, 100, 100, Qt::RelativeSize },
-            { QskStateCombination::CombinationNoState, Q::Disabled } );
-
-        setGradient( Q::Cursor, m_pal.secondaryContainer );
-        setGradient( Q::Cursor | Q::Disabled, m_pal.onSurface12 );
-
-        setBoxBorderMetrics( Q::Cursor, 1_dp );
-        setBoxBorderColors( Q::Cursor, Qt::transparent );
+        setGradient( Q::Splash, stateLayerColor( m_pal.onSecondaryContainer, m_pal.pressedOpacity ) );
+        setAnimation( Q::Splash | A::Color, qskDuration );
     }
 
     {
@@ -634,6 +670,7 @@ void Editor::setupPushButton()
     setSpacing( Q::Panel, 8_dp );
     setPadding( Q::Panel, { 24_dp, 0, 24_dp, 0 } );
     setBoxShape( Q::Panel, 100, Qt::RelativeSize );
+    setShadowColor( Q::Panel, m_pal.shadow );
 
     setStrutSize( Q::Icon, 18_dp, 18_dp );
     setPadding( Q::Icon, { 0, 0, 8_dp, 0 } );
@@ -642,8 +679,7 @@ void Editor::setupPushButton()
     setFontRole( Q::Text, QskMaterial3Skin::M3LabelLarge );
     setPadding( Q::Text, 0 );
 
-    setShadowColor( Q::Panel, m_pal.shadow );
-
+    setBoxShape( Q::Splash, 40_dp );
     setAnimation( Q::Splash | QskAspect::Color, qskDuration );
 
 

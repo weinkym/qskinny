@@ -514,7 +514,7 @@ void Editor::setupComboBoxColors(
 
     const auto& pal = theme.palette;
 
-    for ( const auto state : { QskAspect::NoState, Q::Hovered, Q::Focused, Q::Disabled } )
+    for ( const auto state : { QskAspect::NoState, Q::Hovered, Q::Focused, Q::Pressed, Q::Disabled } )
     {
         QRgb panelColor, borderColor1, borderColor2, textColor;
 
@@ -535,11 +535,17 @@ void Editor::setupComboBoxColors(
         }
         else if ( state == Q::Focused )
         {
-
             panelColor = pal.fillColor.control.inputActive;
             borderColor1 = pal.elevation.textControl.border[0];
             borderColor2 = pal.fillColor.accent.defaultColor;
             textColor = pal.fillColor.text.primary;
+        }
+        else if ( state == Q::Pressed )
+        {
+            panelColor = pal.fillColor.control.inputActive;
+            borderColor1 = pal.elevation.textControl.border[0];
+            borderColor2 = pal.fillColor.accent.defaultColor;
+            textColor = pal.fillColor.text.secondary;
         }
         else if ( state == Q::Disabled )
         {
@@ -564,6 +570,11 @@ void Editor::setupComboBoxColors(
         {
             setGraphicRole( icon, W::GraphicRoleFillColorTextDisabled );
             setGraphicRole( indicator, W::GraphicRoleFillColorTextDisabled );
+        }
+        else if( state == Q::Pressed )
+        {
+            setGraphicRole( icon, W::GraphicRoleFillColorTextSecondary );
+            setGraphicRole( indicator, W::GraphicRoleFillColorTextSecondary );
         }
         else
         {
@@ -724,6 +735,9 @@ void Editor::setupMenuColors(
     setGradient( Q::Panel, pal.background.flyout.defaultColor );
     setShadowColor( Q::Panel, theme.shadow.flyout.color );
 
+    setGradient( Q::Segment | Q::Hovered, pal.fillColor.subtle.secondary );
+    setGradient( Q::Segment | Q::Selected | Q::Pressed, pal.fillColor.subtle.tertiary );
+
     setGradient( Q::Segment | Q::Selected, pal.fillColor.subtle.secondary );
 
     /*
@@ -734,12 +748,17 @@ void Editor::setupMenuColors(
     const auto c1 = pal.fillColor.subtle.secondary;
     const auto c2 = pal.fillColor.accent.defaultColor;
 
-    setBoxBorderColors( Q::Segment | Q::Selected, 
+    setBoxBorderColors( Q::Segment | Q::Selected,
         QskGradient( { { 0.25, c1 }, { 0.25, c2 }, { 0.75, c2 }, { 0.75, c1 } } ) );
 
+    setBoxBorderColors( Q::Segment | Q::Selected | Q::Pressed,
+        QskGradient( { { 0.33, c1 }, { 0.33, c2 }, { 0.67, c2 }, { 0.67, c1 } } ) );
+
     setColor( Q::Text, pal.fillColor.text.primary );
+    setColor( Q::Text | Q::Selected | Q::Pressed, pal.fillColor.text.secondary );
 
     setGraphicRole( Q::Icon, QskFluent2Skin::GraphicRoleFillColorTextPrimary );
+    setGraphicRole( Q::Icon | Q::Selected | Q::Pressed, QskFluent2Skin::GraphicRoleFillColorTextSecondary );
 }
 
 void Editor::setupPageIndicatorMetrics()

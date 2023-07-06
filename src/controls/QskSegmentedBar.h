@@ -37,7 +37,7 @@ class QSK_EXPORT QskSegmentedBar : public QskControl
 
   public:
     QSK_SUBCONTROLS( Panel, Splash, Segment, Separator, Cursor, Text, Icon )
-    QSK_STATES( Selected, Pressed, Minimum, Maximum )
+    QSK_STATES( Selected, Pressed )
 
     QskSegmentedBar( QQuickItem* parent = nullptr );
     QskSegmentedBar( Qt::Orientation, QQuickItem* parent = nullptr );
@@ -103,7 +103,6 @@ class QSK_EXPORT QskSegmentedBar : public QskControl
 
   private:
     int nextIndex( int index, bool forward ) const;
-    void setFocusedIndex( int );
 
     class PrivateData;
     std::unique_ptr< PrivateData > m_data;

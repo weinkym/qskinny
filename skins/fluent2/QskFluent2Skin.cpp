@@ -26,13 +26,8 @@
 
         - QskPageIndicator
 
-    - QskScrollView
-
-      The extended mode of the scrollbar needs to be implemented
-
     - QskListView
 
-      - hover state is not implemented
       - Indicator subcontrol might be better than using the border of the selection box
       - cell padding unclear
 
@@ -708,7 +703,7 @@ void Editor::setupMenuMetrics()
     setBoxBorderMetrics( Q::Panel, 1 );
     setBoxShape( Q::Panel, 7 );
 
-    setPadding( Q::Segment, { 0, 10, 0, 10 } );
+    setPadding( Q::Segment, { 0, 10, 10, 10 } );
     setSpacing( Q::Segment, 15 );
     setBoxBorderMetrics( Q::Segment | Q::Selected, { 3, 0, 0, 0 } );
 
@@ -1102,7 +1097,34 @@ void Editor::setupScrollViewMetrics()
     using Q = QskScrollView;
 
     for ( auto subControl : { Q::HorizontalScrollBar, Q::VerticalScrollBar } )
-        setMetric( subControl | A::Size, 2 );
+    {
+        setMetric( subControl | A::Size, 6 );
+
+        // The scrollbar is expanding, when being hovered/pressed
+
+        const qreal padding = 4;
+
+        if ( subControl == Q::HorizontalScrollBar )
+            setPadding( Q::HorizontalScrollBar, 0, padding, 0, 0 );
+        else
+            setPadding( Q::VerticalScrollBar, padding, 0, 0, 0 );
+
+        setPadding( subControl | Q::Hovered, 0 );
+        setPadding( subControl | Q::Pressed, 0 );
+
+        setBoxShape( subControl, 100, Qt::RelativeSize );
+        setAnimation( subControl | A::Metric, 100 );
+    }
+
+    /*
+        The scroll bars are actually above the viewport, what is not
+        supported by the skinlet. Do we want to have this. TODO ...
+     */
+
+    // handles
+
+    setBoxShape( Q::HorizontalScrollHandle, 100, Qt::RelativeSize );
+    setBoxShape( Q::VerticalScrollHandle, 100, Qt::RelativeSize );
 
     const auto handleExtent = 40.0;
     setStrutSize( Q::HorizontalScrollHandle, handleExtent, 0.0 );
@@ -1112,18 +1134,43 @@ void Editor::setupScrollViewMetrics()
 void Editor::setupScrollViewColors(
     QskAspect::Section section, const QskFluent2Theme& theme )
 {
+    using A = QskAspect;
     using Q = QskScrollView;
 
     const auto& pal = theme.palette;
 
+    {
+        const auto fillColor = pal.fillColor.controlStrong.defaultColor;
+
+        setGradient( Q::HorizontalScrollHandle | section, fillColor );
+        setGradient( Q::VerticalScrollHandle | section, fillColor );
+    }
+
+    for ( auto subControl : { Q::HorizontalScrollBar, Q::VerticalScrollBar } )
+    {
+        auto fillColor = pal.fillColor.acrylic.background;
+
 #if 1
-    setGradient( Q::Panel, QColor() );
-    setGradient( Q::Viewport, QColor() );
+        /*
+            With Fluent2 the scroll bar is supposed to be on top of scrollable
+            item. QskScrollViewSkinlet does not support this yet and we
+            always have the scrollbar on top of the panel. For the light
+            scheme this leads to white on white, so we better shade the scrollbar
+            for the moment: TODO ...
+         */
+        const auto v = qBlue( fillColor );
+        if ( v > 250 )
+        {
+            if ( v == qRed( fillColor ) && v == qGreen( fillColor ) )
+                fillColor = qRgba( 240, 240, 240, qAlpha( fillColor ) );
+        }
 #endif
 
-    for ( auto subControl : { Q::HorizontalScrollHandle, Q::VerticalScrollHandle } )
-    {
-        setGradient( subControl | section, pal.fillColor.controlStrong.defaultColor );
+        setGradient( subControl, QskRgb::toTransparent( fillColor, 0 ) );
+        setGradient( subControl | Q::Hovered, fillColor );
+        setGradient( subControl | Q::Pressed, fillColor );
+
+        setAnimation( subControl | A::Color, 100 );
     }
 }
 
@@ -1596,7 +1643,7 @@ void Editor::setupTextInputColors(
             borderColor2 = pal.elevation.textControl.border[1];
             textColor = pal.fillColor.text.secondary;
         }
-        else if ( state == Q::Disabled )
+        else if ( state == Q::Hovered )
         {
             panelColor = pal.fillColor.control.secondary;
             borderColor1 = pal.elevation.textControl.border[0];

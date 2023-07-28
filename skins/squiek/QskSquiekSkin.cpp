@@ -1012,9 +1012,13 @@ void Editor::setupScrollView()
     // scroll bars
     for ( auto subControl : { Q::HorizontalScrollBar, Q::VerticalScrollBar } )
     {
-        setMetric( subControl | A::Size, 12_dp );
-        setPadding( subControl, 0 );
+        setMetric( subControl | A::Size, 14 );
+        setPadding( subControl, 2 );
         setMargin( subControl, 0 );
+
+        setPanel( subControl, Sunken );
+        setBoxShape( subControl, 100, Qt::RelativeSize );
+        setBoxBorderMetrics( subControl, 1 );
     }
 
     // scrollbar handles
@@ -1024,6 +1028,8 @@ void Editor::setupScrollView()
 
         setButton( subControl, Raised, bw );
         setButton( subControl | Q::Pressed, Sunken, bw );
+        setBoxShape( subControl, 100, Qt::RelativeSize );
+        setBoxShape( subControl | Q::Pressed, 100, Qt::RelativeSize );
 
         const auto extent = 40_dp;
 
@@ -1041,18 +1047,22 @@ void Editor::setupScrollView()
 
 void Editor::setupListView()
 {
+    using A = QskAspect;
     using Q = QskListView;
 
     // padding for each cell
     setPadding( Q::Cell, QskMargins( 4, 8 ) );
 
     setColor( Q::Text, m_pal.themeForeground );
-    setColor( Q::Cell, m_pal.contrasted );
 
-    setColor( Q::Cell | Q::Selected, m_pal.highlighted );
+    // alternating row colors
+    setColor( Q::Cell | A::Lower, Qt::white );
+    setColor( Q::Cell | Q::Selected | A::Lower, m_pal.highlighted );
+
+    setColor( Q::Cell | A::Upper, m_pal.contrasted );
+    setColor( Q::Cell | Q::Selected | A::Upper, m_pal.highlighted );
+
     setColor( Q::Text | Q::Selected, m_pal.highlightedText );
-
-    setFlag( Q::Cell | QskAspect::Style, true ); // alternating colors
 }
 
 void Editor::setupSubWindow()

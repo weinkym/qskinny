@@ -62,7 +62,8 @@ namespace
         Drawer( QQuickItem* parent = nullptr )
             : QskDrawer( parent )
         {
-            auto box = new QskLinearBox( Qt::Vertical );
+            auto box = new QskLinearBox( Qt::Vertical, this );
+
             box->setSection( QskAspect::Header );
             box->setPanel( true );
             box->setPaddingHint( QskBox::Panel, 20 );
@@ -75,8 +76,6 @@ namespace
 
             auto btn = new QskPushButton( "Close", box );
             connect( btn, &QskPushButton::clicked, this, &QskDrawer::close );
-
-            setContent( box );
         }
     };
 
@@ -230,19 +229,17 @@ namespace
             }
 
             {
-                auto drawer = new Drawer( parentItem() );
-                drawer->setEdge( Qt::RightEdge );
-
                 auto burger = new QskPushButton( "≡", this );
                 burger->setEmphasis( QskPushButton::LowEmphasis );
 
                 connect( burger, &QskPushButton::clicked,
-                    drawer, &QskPopup::open );
+                    this, &Header::drawerRequested );
             }
         }
 
       Q_SIGNALS:
         void enabledToggled( bool );
+        void drawerRequested();
     };
 
     class MainView : public QskMainView
@@ -264,6 +261,12 @@ namespace
 
             connect( header, &Header::enabledToggled,
                 tabView, &TabView::setPagesEnabled );
+
+            auto drawer = new Drawer( tabView );
+            drawer->setEdge( Qt::RightEdge );
+
+            connect( header, &Header::drawerRequested,
+                drawer, &QskPopup::toggle );
 
             setHeader( header );
             setBody( tabView );
